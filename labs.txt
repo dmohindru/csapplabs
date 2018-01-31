@@ -1,2 +1,9 @@
 https://github.com/wky/ICS-labs/blob/master/data/bits.c
 https://github.com/wky/ICS-labs/
+
+========= Data Lab related notes =============
+1. If btest build fails use following command to solve the issue
+# sudo apt-get install libc6-dev-i386
+
+
+==============================================

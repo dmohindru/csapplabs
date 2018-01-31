@@ -139,7 +139,12 @@ NOTES:
  *   Rating: 1
  */
 int bitAnd(int x, int y) {
-  return 2;
+  /* We use here demorgan law to solve the problem
+   * NOT(NOT(A) OR NOT(B))
+   * NOT(NOT(A)) AND NOT(NOT(B)) 
+   * A AND B */
+  
+  return ~((~x)|(~y));
 }
 /* 
  * getByte - Extract byte n from word x
