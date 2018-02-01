@@ -155,14 +155,11 @@ int bitAnd(int x, int y) {
  *   Rating: 2
  */
 int getByte(int x, int n) {
-
-
-
-
-
-
-
-  return 2;
+  /* Multiply n by eigth by shifting 3 place to left
+   * then move x to left number of place we get by multipling n
+   * by eight. Then And the least significant byte with 0XFF
+   */
+  return (x >> (n << 3)) & 0xFF;
 
 }
 /* 
@@ -174,6 +171,9 @@ int getByte(int x, int n) {
  *   Rating: 3 
  */
 int logicalShift(int x, int n) {
+  //int mask = (unsigned)-1 >> n;
+  
+  //return (x >> n) & mask;
   return 2;
 }
 /*
@@ -194,7 +194,13 @@ int bitCount(int x) {
  *   Rating: 4 
  */
 int bang(int x) {
-  return 2;
+  /* Using observation (x | ~x + 1) will be all one for any number
+   * other than zero.
+   * For zero (x | ~x + 1) will be all zero.
+   * Hence if all one and 1 to it will generate all zeros as desired
+   * If all zero and 1 to it will generate 1 as desired
+   */
+  return ((x | (~x + 1)) >> 31) + 1;
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -203,7 +209,8 @@ int bang(int x) {
  *   Rating: 1
  */
 int tmin(void) {
-  return 2;
+  /* Moving 1 to MSB using left shift */
+  return 1 << 31;
 }
 /* 
  * fitsBits - return 1 if x can be represented as an 
@@ -236,7 +243,8 @@ int divpwr2(int x, int n) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  /* Observation: as negetive of x is ~x + 1 */
+  return ~x + 1;
 }
 /* 
  * isPositive - return 1 if x > 0, return 0 otherwise 
@@ -246,7 +254,8 @@ int negate(int x) {
  *   Rating: 3
  */
 int isPositive(int x) {
-  return 2;
+  /* If a number is positive MSB will be 0, otherwise 1 */
+  return ((~x >> 31) & 0x1);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
