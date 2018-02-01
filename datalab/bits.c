@@ -254,8 +254,10 @@ int negate(int x) {
  *   Rating: 3
  */
 int isPositive(int x) {
-  /* If a number is positive MSB will be 0, otherwise 1 */
-  return ((~x >> 31) & 0x1);
+  /* Check if number is -ve or number is zero
+   * if both is false then number is greater 0
+   */
+  return !((x & (1 << 31)) | !x);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -275,7 +277,7 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4
  */
 int ilog2(int x) {
-  return 2;
+  return x >> 1;
 }
 /* 
  * float_neg - Return bit-level equivalent of expression -f for
