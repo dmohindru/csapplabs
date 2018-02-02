@@ -171,10 +171,19 @@ int getByte(int x, int n) {
  *   Rating: 3 
  */
 int logicalShift(int x, int n) {
-  //int mask = (unsigned)-1 >> n;
-  
-  //return (x >> n) & mask;
-  return 2;
+  /* 1. Firt create mask of format 011....11
+   * 2. Then right shift mask by n which give format 00011...1
+   * 3. Then add 1 to above mask to give format 00100....0, which makes
+   *    up for the extra zero introduced in step 1
+   * 4. Then OR the result with mask generated in step 2, which gives
+   *    desired mask
+   * 5. right shift x and perform AND operation with mask.
+   * 
+   */
+  int mask = (~0 ^ (1 << 31));
+  mask = (~0 & mask) >> n;
+  mask = mask | (mask + 1);
+  return (x >> n) & mask;
 }
 /*
  * bitCount - returns count of number of 1's in word
