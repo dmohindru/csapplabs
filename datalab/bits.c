@@ -193,7 +193,29 @@ int logicalShift(int x, int n) {
  *   Rating: 4
  */
 int bitCount(int x) {
-  return 2;
+  
+  int c, mask1, mask2, mask3, mask4, mask5;
+  mask1 = (0x55 << 8) | 0x55;
+  mask1 = (mask1 << 16) | mask1; //mask: 0X55555555
+  
+  mask2 = (0x33 << 8) | 0x33;   
+  mask2 = (mask2 << 16) | mask2; //mask: 0X33333333
+  
+  mask3 = (0x0F << 8) | 0x0F;
+  mask3 = (mask3 << 16) | mask3; //mask: 0X0F0F0F0F
+  
+  mask4 = 0xFF;
+  mask4 = (mask4 << 16) | mask4; //mask 0x00FF00FF    
+  
+  mask5 = (0xFF << 8) | 0xFF;   //mask 0x0000FFFF
+  
+  c = ((x >> 1) & mask1) + (x & mask1); //step 1 
+  c = ((c >> 2) & mask2) + (c & mask2); //step 2 
+  c = ((c >> 4) & mask3) + (c & mask3); //step 3 
+  c = ((c >> 8) & mask4) + (c & mask4); //step 4 
+  c = ((c >> 16) & mask5) + (c & mask5); //step 5
+  
+  return c;
 }
 /* 
  * bang - Compute !x without using !
@@ -286,7 +308,38 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4
  */
 int ilog2(int x) {
-  return x >> 1;
+  int c, mask1, mask2, mask3, mask4, mask5;
+  
+  x = (x >> 1) | x;
+  x = (x >> 2) | x;
+  x = (x >> 4) | x;
+  x = (x >> 8) | x;
+  x = (x >> 16) | x;
+  x = x & (~x >> 1); 
+  
+  
+  mask1 = (0x55 << 8) | 0x55;
+  mask1 = (mask1 << 16) | mask1; //mask: 0X55555555
+  
+  mask2 = (0x33 << 8) | 0x33;   
+  mask2 = (mask2 << 16) | mask2; //mask: 0X33333333
+  
+  mask3 = (0x0F << 8) | 0x0F;
+  mask3 = (mask3 << 16) | mask3; //mask: 0X0F0F0F0F
+  
+  mask4 = 0xFF;
+  mask4 = (mask4 << 16) | mask4; //mask 0x00FF00FF    
+  
+  mask5 = (0xFF << 8) | 0xFF;   //mask 0x0000FFFF
+  
+  x = (~x) + (x << 1);
+  c = ((x >> 1) & mask1) + (x & mask1); //step 1 
+  c = ((c >> 2) & mask2) + (c & mask2); //step 2 
+  c = ((c >> 4) & mask3) + (c & mask3); //step 3 
+  c = ((c >> 8) & mask4) + (c & mask4); //step 4 
+  c = ((c >> 16) & mask5) + (c & mask5); //step 5
+  
+  return c;
 }
 /* 
  * float_neg - Return bit-level equivalent of expression -f for
