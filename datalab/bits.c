@@ -178,7 +178,6 @@ int logicalShift(int x, int n) {
    * 4. Then OR the result with mask generated in step 2, which gives
    *    desired mask
    * 5. right shift x and perform AND operation with mask.
-   * 
    */
   int mask = (~0 ^ (1 << 31));
   mask = (~0 & mask) >> n;
@@ -296,11 +295,11 @@ int divpwr2(int x, int n) {
    * e.g. for 8 bit number 1111 1000 adding bais 0000 0111 will be 
    * 1111 1111 >> 3 = 1111 1111
    * for 8 bit number 1111 1010 adding bais 0000 0111 will be 
-   * 1110 1001 >> 3 =  
+   * 0000 0001 >> 3 =  0000 0000
    */
     int sign = (x>>31)&1;
-    int bias = (sign<<n) + ~sign + 1;
-    return (x + bias)>>n; 
+    int bias = (sign<<n) + ~sign + 1; //it generate bit patter of form 000...111
+    return (x + bias) >> n; 
 }
 /* 
  * negate - return -x 
@@ -334,8 +333,19 @@ int isPositive(int x) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  int mask = x ^ y;
-  int diff_sign = ((x >> 31) ^ (y >> 31)) & 0x1;
+  /* 1. xor two number two find different bit position.
+   * 2. generate mask of which has left most bit set.
+   * 3. Perform bitwise and of a number with above generated mask.
+   * 4. If both number are of same sign, then above bitwise and will
+   *    generate a zero if a number is less than or equal to other number
+   *    and non zero if a number is greater than other.
+   * 5. If both number are of opp. sign then above bitwise and will
+   *    generate a non zero result if a number is less or equal to other
+   *    number and zero result if greater than other.   
+   */
+  int mask = x ^ y;  /* find diffent bit set position */
+  int diff_sign = ((x >> 31) ^ (y >> 31)) & 0x1; /* check for different sign bits */
+  /* generate a mask as described in step 2 */
   mask = (mask >> 1) | mask;
   mask = (mask >> 2) | mask;
   mask = (mask >> 4) | mask;
@@ -413,6 +423,8 @@ int ilog2(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
+  /* Just flip the sign bit */
+  
   unsigned exp = uf >> 23 & 0xFF;
   unsigned frac = uf & 0x7FFFFF;
   if (exp == 0xFF && frac != 0) //its a NaN
