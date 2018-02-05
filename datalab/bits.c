@@ -193,6 +193,16 @@ int logicalShift(int x, int n) {
  *   Rating: 4
  */
 int bitCount(int x) {
+  /* Idea that we follow to solve this problem
+   * is to count bits using divide and rule principle.
+   * As illustration for 8 bit number
+   * Step1: Add bits 8+7, 6+5, 4+3, 2+1
+   * Step2: Add bits 8-7 + 6-5, 4-3 + 2-1
+   * Step3: Add bits 8-7-6-4 + 4-3-2-1. And this is a result. 
+   * As bits increases these steps increases
+   * for 16 bits: 4 steps
+   * for 32 bits: 5 steps as demonstrated below
+   */
   
   int c, mask1, mask2, mask3, mask4, mask5;
   mask1 = (0x55 << 8) | 0x55;
@@ -228,7 +238,7 @@ int bang(int x) {
   /* Using observation (x | ~x + 1) will be all one for any number
    * other than zero.
    * For zero (x | ~x + 1) will be all zero.
-   * Hence if all one and 1 to it will generate all zeros as desired
+   * Hence if all one adding 1 to it will generate all zeros as desired
    * If all zero and 1 to it will generate 1 as desired
    */
   return ((x | (~x + 1)) >> 31) + 1;
@@ -253,7 +263,18 @@ int tmin(void) {
  *   Rating: 2
  */
 int fitsBits(int x, int n) {
-  return 2;
+  /* Idea is move x 32-n bits to left
+   * then move it back to right with 32-n bits
+   * and xor with original value to see if any
+   * of the bits are lost/modified in move operation.
+   * If bits are lost x cannot be represented as n bit 2s
+   * complement representation.
+   */
+  int a = (33 + (~n)); //calculate 32-n bits
+  int b = (x << a);    //move x 32-n bits to left
+  int c = (b >> a);    //move back x 32-n bits to right
+  int e = !(c ^ x);    //check if we lost some bits, if yes then we cannot represent
+  return  e;           // x in n bits
 }
 /* 
  * divpwr2 - Compute x/(2^n), for 0 <= n <= 30
@@ -264,7 +285,22 @@ int fitsBits(int x, int n) {
  *   Rating: 2
  */
 int divpwr2(int x, int n) {
-    return 2;
+  /* Divide by power of two is basically right shift a number by n.
+   * For positive number is just the right shift.
+   * For negetive number is right shift + bias.
+   * e.g. assuming 8 bit representatoin
+   * if number is 1111 1000 divide by 8 or right shift by 3.
+   * we need to add bais of form 111 (n bits) to a number.
+   * if any lower n bits contain any 1s then effect of adding bais will
+   * increment the shifted number by one
+   * e.g. for 8 bit number 1111 1000 adding bais 0000 0111 will be 
+   * 1111 1111 >> 3 = 1111 1111
+   * for 8 bit number 1111 1010 adding bais 0000 0111 will be 
+   * 1110 1001 >> 3 =  
+   */
+    int sign = (x>>31)&1;
+    int bias = (sign<<n) + ~sign + 1;
+    return (x + bias)>>n; 
 }
 /* 
  * negate - return -x 
@@ -298,7 +334,15 @@ int isPositive(int x) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  int mask = x ^ y;
+  int diff_sign = ((x >> 31) ^ (y >> 31)) & 0x1;
+  mask = (mask >> 1) | mask;
+  mask = (mask >> 2) | mask;
+  mask = (mask >> 4) | mask;
+  mask = (mask >> 8) | mask;
+  mask = (mask >> 16) | mask;
+  mask = (mask & (~mask >> 1)) | (diff_sign << 31);
+  return !(x & mask) ^ diff_sign; 
 }
 /*
  * ilog2 - return floor(log base 2 of x), where x > 0
@@ -308,6 +352,22 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4
  */
 int ilog2(int x) {
+  /* To calculate log2(num) count number of digits
+   * left to the most significant 1 in a number
+   * e.g
+   * 2  = 0b10       -----> log2(2)  = 1
+   * 16 = 0b10000    -----> log2(16) = 4
+   * 64 = 0b1000000  -----> log2(64) = 6
+   * 78 = 0b1001110  -----> log2(78) = 6
+   * So the solve this problem we first generate a mask 
+   * which has 1 in most significant place and rest all zero
+   * to right of it
+   * e.g. 78 = 0b1001110 -----> (mask) = 0b1000000
+   * then invert this mask into form 0b0111111
+   * finally count number of 1s in above generated mask
+   * using function bitCount  
+   * 
+   */
   int c, mask1, mask2, mask3, mask4, mask5;
   
   x = (x >> 1) | x;
@@ -353,7 +413,12 @@ int ilog2(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
- return 2;
+  unsigned exp = uf >> 23 & 0xFF;
+  unsigned frac = uf & 0x7FFFFF;
+  if (exp == 0xFF && frac != 0) //its a NaN
+    return uf;
+  else
+    return uf ^ 0x80000000;
 }
 /* 
  * float_i2f - Return bit-level equivalent of expression (float) x
@@ -365,7 +430,24 @@ unsigned float_neg(unsigned uf) {
  *   Rating: 4
  */
 unsigned float_i2f(int x) {
-  return 2;
+    int e = 158;
+    int mask = 1<<31;
+    int sign = x&mask;
+    int frac;
+    if (x == mask)
+        return mask | (158<<23);
+    if (!x)
+        return 0;
+    if (sign)
+        x = ~x + 1;
+    while (!(x&mask)) {
+        x = x<<1;
+        e = e -1;
+    }
+    frac = (x&(~mask)) >> 8;
+    if (x&0x80 && ((x&0x7F) > 0 || frac&1)) //round off condition
+        frac = frac + 1;
+    return sign + (e<<23) + frac;
 }
 /* 
  * float_twice - Return bit-level equivalent of expression 2*f for
@@ -379,5 +461,19 @@ unsigned float_i2f(int x) {
  *   Rating: 4
  */
 unsigned float_twice(unsigned uf) {
-  return 2;
+  unsigned sign = uf >> 31;
+  unsigned exp = uf >> 23 & 0xFF;
+  unsigned frac = uf & 0x7FFFFF;
+  if (exp == 0xFF) //its a NaN or oo
+    return uf;
+  else if (exp == 0) //its a denormalized number
+    frac <<= 1;
+  else if(exp == 0xFF - 1)//max exponent
+  {
+    exp = 0xFF;
+    frac = 0;
+  }
+  else //normal number
+    exp += 1;
+  return (sign << 31 | exp << 23 | frac);
 }
