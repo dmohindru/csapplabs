@@ -1,9 +1,15 @@
 https://github.com/wky/ICS-labs/blob/master/data/bits.c
 https://github.com/wky/ICS-labs/
 
-========= Data Lab related notes =============
+========= Data Lab related notes =====================
 1. If btest build fails use following command to solve the issue
 # sudo apt-get install libc6-dev-i386
 
+======================================================
 
-==============================================
+========= Binary Bomb Lab related notes ==============
+1. Binary Bomb request server for practice
+http://www.cs.utah.edu/~mflatt/past-courses/cs4400/f16/bomb.html
+
+======================================================
+
