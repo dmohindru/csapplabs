@@ -1,0 +1,11 @@
+-------------PHASE 1------------------------
+Call Address    : 400e3a
+Start Address   : 400ee0
+Paramater 1     : %rdi
+Paramater 2     : %esi
+Phase 1 String  : 0x402400
+
+
+
+
+-------------------------------------------
