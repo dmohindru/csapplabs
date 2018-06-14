@@ -4,8 +4,42 @@ Start Address   : 400ee0
 Paramater 1     : %rdi
 Paramater 2     : %esi
 Phase 1 String  : 0x402400
-
-
-
-
+Possible code for phase 1
+phase_1(char *input_str)
+{
+  char *phase1_str = 0x0x402400
+  if(strings_not_equal(input_str, phase1_str))
+  {
+    explode_bomb();
+    return;
+  }
+  printf("Phase 1 defused. How about the next one?\n")
+}
+-------------------------------------------
+-------------PHASE 2------------------------
+Call Address    : 400e56
+Start Address   : 400efc
+Paramater 1     : %rdi (input string)
+read_six_numbers reading six integer numbers and store at address
+%rsp      = number 1
+%rsp + 4  = number 2
+%rsp + 8  = number 3
+%rsp + 12 = number 4
+%rsp + 16 = number 5
+%rsp + 20 = number 6
+%rsp + 24 = As end condition
+Possible numbers at address
+%rsp      = 1
+for %rsp + 4
+%rbx = %rsp + 4
+let a = (%rbx)
+%eax = a - 4
+%eax = %eax + %eax = a - 4 + a - 4 = 2a - 8
+a = 2a - 8 (equation for number to be correct)
+solving for a
+1a - 8 = 0
+a = 8
+so possibly number is
+188888
+ 
 -------------------------------------------

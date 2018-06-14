@@ -11,5 +11,8 @@ https://github.com/wky/ICS-labs/
 1. Binary Bomb request server for practice
 http://www.cs.utah.edu/~mflatt/past-courses/cs4400/f16/bomb.html
 
+2. Technique on solving binary bomb labs
+http://zpalexander.com/binary-bomb-lab-phase-1/
+
 ======================================================
 
