@@ -40,6 +40,21 @@ solving for a
 1a - 8 = 0
 a = 8
 so possibly number is
-188888
+1 2 4 8 16 32
+i_next = (i_prev) * 2
  
 -------------------------------------------
+-------------PHASE 3------------------------
+Call Address    : 400e72
+Start Address   : 400f43
+Paramater 1     : %rdi (input string)
+here we call sscanf function with
+1st parameter %rdi: input string by user
+2nd parameter %rsi: memory address 0x4025cf which probably contains pointer to format string
+3rd parameter %rdx: which is a pointer to memory location %rsp+8
+4th parameter %rcx: which is a pointer to memory location %rsp+12
+so basically this sscanf is try to read two integer (signed or unsigned) (4 bytes)
+and store these number at memory location %rsp+8, %rsp+12
+
+-------------------------------------------
+
