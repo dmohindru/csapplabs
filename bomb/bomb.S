@@ -391,27 +391,27 @@ Disassembly of section .text:
   400f63:	7f 05                	jg     400f6a <phase_3+0x27>        ;if %eax>1 than jump to 400f6a 
   400f65:	e8 d0 04 00 00       	callq  40143a <explode_bomb>        ;else explode bomb (if two integers can't be read from input string)
   400f6a:	83 7c 24 08 07       	cmpl   $0x7,0x8(%rsp)               ;compare %rsp+8 with 7 (or the first number scanned by sscanf)
-  400f6f:	77 3c                	ja     400fad <phase_3+0x6a>        ;if unsigned(%rsp+8) > 7 jump to explode bomb 
+  400f6f:	77 3c                	ja     400fad <phase_3+0x6a>        ;if unsigned(%rsp+8) >= 7 jump to explode bomb 
   400f71:	8b 44 24 08          	mov    0x8(%rsp),%eax               ;move %eax = %rsp+8 (or the first number scanned by sscanf)
   400f75:	ff 24 c5 70 24 40 00 	jmpq   *0x402470(,%rax,8)           ;jump to location 0x402470 + (%rax*8)
-  400f7c:	b8 cf 00 00 00       	mov    $0xcf,%eax                   ;mov constant %eax = cf
-  400f81:	eb 3b                	jmp    400fbe <phase_3+0x7b>        ;jump to location 0x400fbe
-  400f83:	b8 c3 02 00 00       	mov    $0x2c3,%eax
+  400f7c:	b8 cf 00 00 00       	mov    $0xcf,%eax                   ;jump here when first number (%rsp+8) is 0
+  400f81:	eb 3b                	jmp    400fbe <phase_3+0x7b>        
+  400f83:	b8 c3 02 00 00       	mov    $0x2c3,%eax                  ;jump here when first number (%rsp+8) is 2
   400f88:	eb 34                	jmp    400fbe <phase_3+0x7b>
-  400f8a:	b8 00 01 00 00       	mov    $0x100,%eax
+  400f8a:	b8 00 01 00 00       	mov    $0x100,%eax                  ;jump here when first number (%rsp+8) is 3
   400f8f:	eb 2d                	jmp    400fbe <phase_3+0x7b>
-  400f91:	b8 85 01 00 00       	mov    $0x185,%eax
+  400f91:	b8 85 01 00 00       	mov    $0x185,%eax                  ;jump here when first number (%rsp+8) is 4
   400f96:	eb 26                	jmp    400fbe <phase_3+0x7b>
-  400f98:	b8 ce 00 00 00       	mov    $0xce,%eax
+  400f98:	b8 ce 00 00 00       	mov    $0xce,%eax                   ;jump here when first number (%rsp+8) is 5
   400f9d:	eb 1f                	jmp    400fbe <phase_3+0x7b>
-  400f9f:	b8 aa 02 00 00       	mov    $0x2aa,%eax
+  400f9f:	b8 aa 02 00 00       	mov    $0x2aa,%eax                  ;jump here when first number (%rsp+8) is 6
   400fa4:	eb 18                	jmp    400fbe <phase_3+0x7b>
-  400fa6:	b8 47 01 00 00       	mov    $0x147,%eax
+  400fa6:	b8 47 01 00 00       	mov    $0x147,%eax                  ;jump here when first number (%rsp+8) is 7
   400fab:	eb 11                	jmp    400fbe <phase_3+0x7b>
   400fad:	e8 88 04 00 00       	callq  40143a <explode_bomb>
   400fb2:	b8 00 00 00 00       	mov    $0x0,%eax
   400fb7:	eb 05                	jmp    400fbe <phase_3+0x7b>
-  400fb9:	b8 37 01 00 00       	mov    $0x137,%eax
+  400fb9:	b8 37 01 00 00       	mov    $0x137,%eax                  ;jump here when first number (%rsp+8) is 1
   400fbe:	3b 44 24 0c          	cmp    0xc(%rsp),%eax               ;compare %rsp+12 with %eax
   400fc2:	74 05                	je     400fc9 <phase_3+0x86>        ;if %rsp+12 = %eax jump to 400fc9
   400fc4:	e8 71 04 00 00       	callq  40143a <explode_bomb>        ;else explode bomb

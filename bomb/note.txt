@@ -55,6 +55,17 @@ here we call sscanf function with
 4th parameter %rcx: which is a pointer to memory location %rsp+12
 so basically this sscanf is try to read two integer (signed or unsigned) (4 bytes)
 and store these number at memory location %rsp+8, %rsp+12
+number combos
+0   207
+1   311
+2   707
+3   256
+4   389
+5   206
+6   682
+7   327
+-------------------------------------------
+-------------PHASE 4------------------------
+
 
 -------------------------------------------
-
