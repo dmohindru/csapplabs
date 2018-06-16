@@ -66,6 +66,48 @@ number combos
 7   327
 -------------------------------------------
 -------------PHASE 4------------------------
-
+Call Address    : 400e8e
+Start Address   : 40100c
+Paramater 1     : %rdi (input string)
+This phase read two integers 
+first integer as unsigned should less than or equal to 14
+second integer value unknown and type(unsigned or signed)
+func4 is called as func4(first_inteter, 0, 14)
+return value of func4 should be zero and second_integer should be zero, else bomb explodes
+Possible code for func4
+int func4(first_arg, second_arg, third_arg)
+{
+//first_arg in %rdi
+//second_arg in %rsi
+//third_arg in %rdx
+  int ret_val = third_arg;
+  ret_val -= second_arg;
+  int new_val = ret_val;
+  new_val = new_val >> 31;
+  ret_val += new_val;
+  ret_val = ret_val >> 1;
+  new_val = ret_val + (second_arg * 1);
+  if(new_val>second_arg)
+  {
+    third_arg = new_val - 1;
+    int new_ret_val = func4(first_arg, second_arg, third_arg)
+    return new_ret_val * 2;
+    
+  }
+  else
+  {
+    ret_val = 0;
+    if(new_val<second_arg)
+    {
+      return ret_val;
+    }
+    else
+    {
+      second_arg = new_val + 1;
+      int new_ret_val = func4(first_arg, second_arg, third_arg);
+      return  (2 * new_ret_val)  + 1;
+    }
+  }
+}
 
 -------------------------------------------
