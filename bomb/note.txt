@@ -118,5 +118,8 @@ as function func4 return 0 for following value of first_arg
 0, 1, 3, 7
 --------------------------------------------
 -------------PHASE 5------------------------
-
+Call Address    : 400eaa
+Start Address   : 401062
+Paramater 1     : %rdi (input string)
+First check this phase does is to check if string length is 6
 --------------------------------------------
