@@ -474,7 +474,7 @@ Disassembly of section .text:
   401071:	00 00                                                       ;empty instruction
   401073:	48 89 44 24 18       	mov    %rax,0x18(%rsp)                ;move value strored in %rax into %rsp+24
   401078:	31 c0                	xor    %eax,%eax                      ;zero out 32 bit of %rax register
-  40107a:	e8 9c 02 00 00       	callq  40131b <string_length>         ;call string_length function
+  40107a:	e8 9c 02 00 00       	callq  40131b <string_length>         ;call string_length function with %rdi containg pointer to input string
   40107f:	83 f8 06             	cmp    $0x6,%eax                      ;compare string lenght to 6
   401082:	74 4e                	je     4010d2 <phase_5+0x70>          ;if equal to 6 jump to 4010d2
   401084:	e8 b1 03 00 00       	callq  40143a <explode_bomb>          ;else explode bomb
@@ -484,18 +484,18 @@ Disassembly of section .text:
   401092:	48 8b 14 24          	mov    (%rsp),%rdx                    ;mov contents of %rsp to %rdx (%rdx = (%rsp))
   401096:	83 e2 0f             	and    $0xf,%edx                      ;preserve lower 4 bits of %edx (which makes range 0-15)
   401099:	0f b6 92 b0 24 40 00 	movzbl 0x4024b0(%rdx),%edx            ;move zero extended by at address 0x4024b0+%rdx to %edx, %edx=(0x4024b0+%rdx)
-  4010a0:	88 54 04 10          	mov    %dl,0x10(%rsp,%rax,1)          ;move byte from %dl to %rsp+%rax*1, (%rsp+%rax*1) = %dl 
+  4010a0:	88 54 04 10          	mov    %dl,0x10(%rsp,%rax,1)          ;move byte from %dl to (%rsp+%rax*1+16), (%rsp+%rax*1+16) = %dl 
   4010a4:	48 83 c0 01          	add    $0x1,%rax                      ;%rax = %rax+1
   4010a8:	48 83 f8 06          	cmp    $0x6,%rax                      ;compare %rax with 6
   4010ac:	75 dd                	jne    40108b <phase_5+0x29>          ;if not equal to 6 jump to 40108b
-  4010ae:	c6 44 24 16 00       	movb   $0x0,0x16(%rsp)                ;else move byte 0 to %rsp+22
+  4010ae:	c6 44 24 16 00       	movb   $0x0,0x16(%rsp)                ;else move byte 0 to %rsp+22 or a null pointer
   4010b3:	be 5e 24 40 00       	mov    $0x40245e,%esi                 ;move pointer $0x40245e to %esi
   4010b8:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi                ;move pointer %rsp+16 to %rdi
   4010bd:	e8 76 02 00 00       	callq  401338 <strings_not_equal>     ;call function strings_not_equal
   4010c2:	85 c0                	test   %eax,%eax                      ;test return value %eax&%eax
   4010c4:	74 13                	je     4010d9 <phase_5+0x77>          ;if zero jump to 4010d9
   4010c6:	e8 6f 03 00 00       	callq  40143a <explode_bomb>          ;else call explode bomb
-  4010cb:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)               ;unreachable instruction (seems no instruction)
+  4010cb:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)               ;unreachable instruction (seems nop instruction)
   4010d0:	eb 07                	jmp    4010d9 <phase_5+0x77>          ;jump to 4010d9
   4010d2:	b8 00 00 00 00       	mov    $0x0,%eax                      ;mov zero to %eax (%eax=0)
   4010d7:	eb b2                	jmp    40108b <phase_5+0x29>          ;jmp to 40108b

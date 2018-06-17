@@ -121,5 +121,41 @@ as function func4 return 0 for following value of first_arg
 Call Address    : 400eaa
 Start Address   : 401062
 Paramater 1     : %rdi (input string)
-First check this phase does is to check if string length is 6
+First check this phase does is to check if string length is 6 (not including carriage return)
+main login to decipher between
+40108b - 4010ac as it contains some kind of string generation
+line between
+4010b3 - 4010c6 contain logic for equality between two strings
+Logic for line between 40108b - 4010ac
+Loop repeated 6 times (initally %eax = 0) and (%eax <6)
+1. move character pointed by index value in %eax of input_string to %ecx; 
+2. move byte in %cl to mem location %rsp
+3. move value from mem location %rsp to %rdx
+4. preserve last 4 bits of %rdx with operation and ($0xf, %rdx)
+5. move zero extended byte at address 0x4024b0+%rdx to %edx, %edx=(0x4024b0+%rdx)
+6. move byte val of %dl to memory locaton (16+%rsp+%rax*1)
+7. increment %eax by one
+
+Points of observation
+1. value of %fs:0x28 in %rax at address 40106a set break point at 401071 : 0x6038c0
+2. value stored at mem address 0x4024b0 set break point at 4010a0 (not really required)
+0x4024b0 <array.3449>:	109(m)	  97(a)	  100(d)	  117(u)	  105(i)	  101(e)	  114(r)	  115(s)
+0x4024b8 <array.3449+8>:110(n)	102(f)    111(o)	  116(t)	  118(v)	  98(b)	    121(y)    108(l)
+3. string stored at address $0x40245e set break point at 4010b3  (not really required)
+"\276^$@"
+TEST run
+input string: dhruv1
+(16+%rsp+%rax*1) = (d:100)105 (h:104)110 (r:114)100 (u:117)101 (v:118)114 (1:49)97
+Right answer string ascii code
+102(f)   108(l)   121(y)   101(e)   114(r)   115(s)   0(null)  ---> "flyers"
+answer should be
+1 char index(102:f): 9      1001        I  
+2 char index(108:l): 15     1111        O
+3 char index(121:y): 14     1110        N
+4 char index(101:e): 5      0101        E  
+5 char index(114:r): 6      0110        F
+6 char index(115:s): 7      0111        G
+
+Solution to phase 5
+"IONEFG"
 --------------------------------------------
