@@ -509,61 +509,61 @@ Disassembly of section .text:
   4010f3:	c3                   	retq                                  ;return
 
 00000000004010f4 <phase_6>:
-  4010f4:	41 56                	push   %r14
-  4010f6:	41 55                	push   %r13
-  4010f8:	41 54                	push   %r12
-  4010fa:	55                   	push   %rbp
-  4010fb:	53                   	push   %rbx
-  4010fc:	48 83 ec 50          	sub    $0x50,%rsp
-  401100:	49 89 e5             	mov    %rsp,%r13
-  401103:	48 89 e6             	mov    %rsp,%rsi
-  401106:	e8 51 03 00 00       	callq  40145c <read_six_numbers>
-  40110b:	49 89 e6             	mov    %rsp,%r14
-  40110e:	41 bc 00 00 00 00    	mov    $0x0,%r12d
-  401114:	4c 89 ed             	mov    %r13,%rbp
-  401117:	41 8b 45 00          	mov    0x0(%r13),%eax
-  40111b:	83 e8 01             	sub    $0x1,%eax
-  40111e:	83 f8 05             	cmp    $0x5,%eax
-  401121:	76 05                	jbe    401128 <phase_6+0x34>
-  401123:	e8 12 03 00 00       	callq  40143a <explode_bomb>
-  401128:	41 83 c4 01          	add    $0x1,%r12d
-  40112c:	41 83 fc 06          	cmp    $0x6,%r12d
-  401130:	74 21                	je     401153 <phase_6+0x5f>
-  401132:	44 89 e3             	mov    %r12d,%ebx
-  401135:	48 63 c3             	movslq %ebx,%rax
-  401138:	8b 04 84             	mov    (%rsp,%rax,4),%eax
-  40113b:	39 45 00             	cmp    %eax,0x0(%rbp)
-  40113e:	75 05                	jne    401145 <phase_6+0x51>
-  401140:	e8 f5 02 00 00       	callq  40143a <explode_bomb>
-  401145:	83 c3 01             	add    $0x1,%ebx
-  401148:	83 fb 05             	cmp    $0x5,%ebx
-  40114b:	7e e8                	jle    401135 <phase_6+0x41>
-  40114d:	49 83 c5 04          	add    $0x4,%r13
-  401151:	eb c1                	jmp    401114 <phase_6+0x20>
-  401153:	48 8d 74 24 18       	lea    0x18(%rsp),%rsi
-  401158:	4c 89 f0             	mov    %r14,%rax
-  40115b:	b9 07 00 00 00       	mov    $0x7,%ecx
-  401160:	89 ca                	mov    %ecx,%edx
-  401162:	2b 10                	sub    (%rax),%edx
-  401164:	89 10                	mov    %edx,(%rax)
-  401166:	48 83 c0 04          	add    $0x4,%rax
-  40116a:	48 39 f0             	cmp    %rsi,%rax
-  40116d:	75 f1                	jne    401160 <phase_6+0x6c>
-  40116f:	be 00 00 00 00       	mov    $0x0,%esi
-  401174:	eb 21                	jmp    401197 <phase_6+0xa3>
+  4010f4:	41 56                	push   %r14                           ;save %r14 on stack
+  4010f6:	41 55                	push   %r13                           ;save %r14 on stack
+  4010f8:	41 54                	push   %r12                           ;save %r12 on stack
+  4010fa:	55                   	push   %rbp                           ;save %rbp on stack
+  4010fb:	53                   	push   %rbx                           ;save %rbx on stack
+  4010fc:	48 83 ec 50          	sub    $0x50,%rsp                     ;allocate 80 bytes on stack
+  401100:	49 89 e5             	mov    %rsp,%r13                      ;mov %rsp to %r12
+  401103:	48 89 e6             	mov    %rsp,%rsi                      ;mov %rsp to %rsi (as second argument to function read_six_numbers)
+  401106:	e8 51 03 00 00       	callq  40145c <read_six_numbers>      ;call read_six_number (input_string in %rdi, number array in %rsi)
+  40110b:	49 89 e6             	mov    %rsp,%r14                      ;move pointer/first number of array to %r14
+  40110e:	41 bc 00 00 00 00    	mov    $0x0,%r12d                     ;move zero to %r12d (double word)
+  401114:	4c 89 ed             	mov    %r13,%rbp                      ;move %r12 to %rbp (or %rbp = %rsp)
+  401117:	41 8b 45 00          	mov    0x0(%r13),%eax                 ;move %r13+0 to %eax (or %eax = %rsp+0)
+  40111b:	83 e8 01             	sub    $0x1,%eax                      ;decrement %eax by 1 (%eax = %eax - 1)
+  40111e:	83 f8 05             	cmp    $0x5,%eax                      ;compare %eax with 0x5
+  401121:	76 05                	jbe    401128 <phase_6+0x34>          ;if unsigned (%eax<=5) then jump to 401128
+  401123:	e8 12 03 00 00       	callq  40143a <explode_bomb>          ;else call explode_bomb
+  401128:	41 83 c4 01          	add    $0x1,%r12d                     ;increment %r12d by 1
+  40112c:	41 83 fc 06          	cmp    $0x6,%r12d                     ;compare with six
+  401130:	74 21                	je     401153 <phase_6+0x5f>          ;if equal to six jump to 401153 (end of loop)
+  401132:	44 89 e3             	mov    %r12d,%ebx                     ;move %r12d to %ebx (basically move index to %ebx)
+  401135:	48 63 c3             	movslq %ebx,%rax                      ;move 32bit to 64bit %ebx to %rax
+  401138:	8b 04 84             	mov    (%rsp,%rax,4),%eax             ;%eax = %rsp + %rax*4 (read next integer into %eax)
+  40113b:	39 45 00             	cmp    %eax,0x0(%rbp)                 ;compare %eax with %rbp+0 (compare next integer with first integer at %rsp)
+  40113e:	75 05                	jne    401145 <phase_6+0x51>          ;if not equal jump to 401145
+  401140:	e8 f5 02 00 00       	callq  40143a <explode_bomb>          ;else explode bomb
+  401145:	83 c3 01             	add    $0x1,%ebx                      ;increment index by one
+  401148:	83 fb 05             	cmp    $0x5,%ebx                      ;compare index or %ebx with five
+  40114b:	7e e8                	jle    401135 <phase_6+0x41>          ;if %ebx <= 5 jump to 401135
+  40114d:	49 83 c5 04          	add    $0x4,%r13                      ;else compute %r13 = %r13+0x4 (%r13=%rsp+4)
+  401151:	eb c1                	jmp    401114 <phase_6+0x20>          ;jump to 401114
+  401153:	48 8d 74 24 18       	lea    0x18(%rsp),%rsi                ;jump here when six number are read. computer pointer %rsi = %rsp+24
+  401158:	4c 89 f0             	mov    %r14,%rax                      ;move %r14 to %rax (%rax = %rsp)
+  40115b:	b9 07 00 00 00       	mov    $0x7,%ecx                      ;move 0x7 into %ecx (%ecx = 7)
+  401160:	89 ca                	mov    %ecx,%edx                      ;move %ecx into %edx (%edx = 7)
+  401162:	2b 10                	sub    (%rax),%edx                    ;compute %edx = %edx - (%rsp)
+  401164:	89 10                	mov    %edx,(%rax)                    ;move %edx to (%rsp) (or (%rsp) = %edx)
+  401166:	48 83 c0 04          	add    $0x4,%rax                      ;compute %rax = %rax+4 (next integer in array)
+  40116a:	48 39 f0             	cmp    %rsi,%rax                      ;compare pointers %rsi with %rax 
+  40116d:	75 f1                	jne    401160 <phase_6+0x6c>          ;if not equal then jump to 401160 (read next integer)
+  40116f:	be 00 00 00 00       	mov    $0x0,%esi                      ;mov $0x0 to %esi
+  401174:	eb 21                	jmp    401197 <phase_6+0xa3>          ;jump to 401197
   401176:	48 8b 52 08          	mov    0x8(%rdx),%rdx
   40117a:	83 c0 01             	add    $0x1,%eax
   40117d:	39 c8                	cmp    %ecx,%eax
   40117f:	75 f5                	jne    401176 <phase_6+0x82>
   401181:	eb 05                	jmp    401188 <phase_6+0x94>
-  401183:	ba d0 32 60 00       	mov    $0x6032d0,%edx
-  401188:	48 89 54 74 20       	mov    %rdx,0x20(%rsp,%rsi,2)
-  40118d:	48 83 c6 04          	add    $0x4,%rsi
-  401191:	48 83 fe 18          	cmp    $0x18,%rsi
-  401195:	74 14                	je     4011ab <phase_6+0xb7>
-  401197:	8b 0c 34             	mov    (%rsp,%rsi,1),%ecx
-  40119a:	83 f9 01             	cmp    $0x1,%ecx
-  40119d:	7e e4                	jle    401183 <phase_6+0x8f>
+  401183:	ba d0 32 60 00       	mov    $0x6032d0,%edx                 ;mov some number or pointer to %edx
+  401188:	48 89 54 74 20       	mov    %rdx,0x20(%rsp,%rsi,2)         ;save %rdx to %rsp+(%rsi*2) or %rsp+(%rsi*2) =  %rdx
+  40118d:	48 83 c6 04          	add    $0x4,%rsi                      ;incement %rsi by 4
+  401191:	48 83 fe 18          	cmp    $0x18,%rsi                     ;compare %rsi with 24
+  401195:	74 14                	je     4011ab <phase_6+0xb7>          ;if equal to 24 jump to 4011ab
+  401197:	8b 0c 34             	mov    (%rsp,%rsi,1),%ecx             ;move %rsp+(%rsi*1) to %ecx or %ecx = %rsp + (%rsi*1)
+  40119a:	83 f9 01             	cmp    $0x1,%ecx                      ;compare %ecx with 1
+  40119d:	7e e4                	jle    401183 <phase_6+0x8f>          ;if <= 1 then jump to 401183
   40119f:	b8 01 00 00 00       	mov    $0x1,%eax
   4011a4:	ba d0 32 60 00       	mov    $0x6032d0,%edx
   4011a9:	eb cb                	jmp    401176 <phase_6+0x82>

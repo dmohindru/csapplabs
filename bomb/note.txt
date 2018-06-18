@@ -159,3 +159,10 @@ answer should be
 Solution to phase 5
 "IONEFG"
 --------------------------------------------
+-------------PHASE 6------------------------
+Call Address    : 400ec6
+Start Address   : 4010f4
+Paramater 1     : %rdi (input string)
+
+decoding at line 401195
+--------------------------------------------
