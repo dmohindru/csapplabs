@@ -164,5 +164,45 @@ Call Address    : 400ec6
 Start Address   : 4010f4
 Paramater 1     : %rdi (input string)
 
-decoding at line 401195
+1. This function start with saving few register on stack (%r14,%r13,%r12,%rbp,%rbx) on stack and allocating
+80 bytes on stack. [0x4010f4-0x4010fc]
+2. It save %rsp (top of stack) to %r13 (logic unclear as of now) [0x401100]
+3. Calls read_six_number with first argument in %rdi (input string) and 
+second argument in %rsi (pointer to array of number) [0x401106]
+4. After call to read_six_number. checks for the first number inputed at address %rsp 
+to be less than 6 (unsigned) [0x401117-0x401121], else explodes bomb.
+5. It then check for other five numbers inputed for not equal to first number entered. If any of other number
+inputed is equal to first number bomb is exploded. [0x401128-0x40114b]
+6. After completing above check in loop it computes address %r13=%rsp+4. Basically next element in array of integers.
+Then it move the content of %r13 to %rsp. Checks for this fifth element to be less than 6 (unsigned).
+
+7. line between[0x401114-0x401151] contains two nested loop
+
+read_six_number(input_string, int_array)
+
+i=0
+array_pos = int_array
+while(i<6)
+{
+  int *pos = array_pos;
+  int number = *array_pos;
+  if(number > 5)
+    explode_bomb
+  i++;
+  j=i;
+  while(j<=5)
+  {
+    if(*pos == array_pos[j])
+      explode_bomb
+    j++
+  }
+  int_array++
+    
+}
+
+from above code we can deduce that all six number entered should be less than six and none of them should be same.
+Verify above hypothisis by running a debugger with following input
+0 1 2 3 4 5
+5 4 3 2 1 0
+5 5 3 2 1 0
 --------------------------------------------
