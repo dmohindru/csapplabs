@@ -218,6 +218,7 @@ while(i<=0)
 }
 so the resulting range of number would be {1,2,3,4,5,6}
 need to test this hypothysis
+this hypothysis is correct
 
 9.Lines:[0x40116f-0x4011a9]
 
@@ -249,4 +250,40 @@ while(i<6)
 
 things to analysis in this code
 look memory contents from 0x6032d0 to 6 eight bytes value
+
+contents of 6 memory location (8 bytes) at 0x6032d0   (6304464=0x6032d0)
+0x6032d0 <node1>:	4294967628	6304480 (location 2)    (6304480=0x6032e0)
+0x6032e0 <node2>:	8589934760	6304496 (location 3)    (6304496=0x6032f0)
+0x6032f0 <node3>:	12884902812	6304512 (location 4)    (6304512=0x603300)
+0x603300 <node4>:	17179869875	6304528 (location 5)    (6304528=0x603310)
+0x603310 <node5>:	21474836957	6304544 (locaiton 6)    (6304544=0x603320)
+0x603320 <node6>:	25769804219	0
+
+it seems some kind of linked list
+
+test with input : 1 2 3 4 5 6
+contents of 6 memory location (8 bytes) at $rsp+32
+$rsp+0:   (loc:6)  6304544 - ok
+$rsp+4:   (loc:5)  6304528 - ok
+$rsp+8:   (loc:4)  6304512 - ok
+$rsp+12:  (loc:3)  6304496 - ok
+$rsp+16:  (loc:2)  6304480 - ok
+$rsp+20:  (loc:1)  6304464 - ok
+
+test with input : 6 5 4 3 2 1 
+value of %rsp = 0x7fffffffd910
+content of 6 memory locatoin (8 bytes) at %rsp+32 = 0x7fffffffd930
+0x7fffffffd930:	6304464(loc:1)	6304480(loc:2)
+0x7fffffffd940:	6304496(loc:3)	6304512(loc:4)
+0x7fffffffd950:	6304528(loc:5)	6304544(loc:6)
+
+point to take away for the following number entered in int array (4 bytes)
+corrosponding pointer will be stored in pointer array (8 bytes)
+int_array(input)     pointer_array
+    1                   6304544
+    2                   6304528
+    3                   6304512
+    4                   6304496
+    5                   6304480
+    6                   6304464
 --------------------------------------------
