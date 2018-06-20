@@ -208,4 +208,45 @@ Verify above hypothisis by running a debugger with following input
 6 4 5 1 3 2
 5 5 3 2 1 0
 This hypothysis seems correct
+
+8.Lines:[0x401153-0x40116d]
+It loops through all the numbers and subtract that number from save and save it back in memory
+while(i<=0)
+{
+  int_array[i] = 7 - int_array[i];
+  i++;
+}
+so the resulting range of number would be {1,2,3,4,5,6}
+need to test this hypothysis
+
+9.Lines:[0x40116f-0x4011a9]
+
+long *new_ptr_array = int_array+8 (point to 8 element beyond or 32 bytes)
+i=0
+while(i<6)
+{
+  val = int_array[i]
+  if (val > 1)
+  {
+    temp_val = 1;
+    temp_val += 1;
+    long *temp_ptr = 0x6032d0+0x8;
+    while(val != temp_val)
+    {
+      temp_ptr += 0x8;
+      ptr_val = *(temp_ptr);
+      temp_val += 1;
+    }
+    new_ptr_array[i] = ptr_val;
+  
+  }
+  else
+  {
+    new_ptr_array[i] = 0x6032d0
+  }
+  i++;
+}
+
+things to analysis in this code
+look memory contents from 0x6032d0 to 6 eight bytes value
 --------------------------------------------

@@ -542,15 +542,16 @@ Disassembly of section .text:
   40114d:	49 83 c5 04          	add    $0x4,%r13                      ;else compute %r13 = %r13+0x4 (%r13=%rsp+4)
   401151:	eb c1                	jmp    401114 <phase_6+0x20>          ;jump to 401114
   
-  401153:	48 8d 74 24 18       	lea    0x18(%rsp),%rsi                ;jump here when six number are read. computer pointer %rsi = %rsp+24
+  401153:	48 8d 74 24 18       	lea    0x18(%rsp),%rsi                ;jump here when six number are read. compute pointer %rsi = %rsp+24
   401158:	4c 89 f0             	mov    %r14,%rax                      ;move %r14 to %rax (%rax = %rsp)
   40115b:	b9 07 00 00 00       	mov    $0x7,%ecx                      ;move 0x7 into %ecx (%ecx = 7)
   401160:	89 ca                	mov    %ecx,%edx                      ;move %ecx into %edx (%edx = 7)
-  401162:	2b 10                	sub    (%rax),%edx                    ;compute %edx = %edx - (%rsp)
-  401164:	89 10                	mov    %edx,(%rax)                    ;move %edx to (%rsp) (or (%rsp) = %edx)
+  401162:	2b 10                	sub    (%rax),%edx                    ;compute %edx = %edx - (%rsp) (subtract entered number from 7)
+  401164:	89 10                	mov    %edx,(%rax)                    ;move %edx to (%rsp) (or (%rsp) = %edx) (save computation back in memory)
   401166:	48 83 c0 04          	add    $0x4,%rax                      ;compute %rax = %rax+4 (next integer in array)
-  40116a:	48 39 f0             	cmp    %rsi,%rax                      ;compare pointers %rsi with %rax 
+  40116a:	48 39 f0             	cmp    %rsi,%rax                      ;compare pointers %rsi with %rax (end point marker)
   40116d:	75 f1                	jne    401160 <phase_6+0x6c>          ;if not equal then jump to 401160 (read next integer)
+  
   40116f:	be 00 00 00 00       	mov    $0x0,%esi                      ;mov $0x0 to %esi
   401174:	eb 21                	jmp    401197 <phase_6+0xa3>          ;jump to 401197
   401176:	48 8b 52 08          	mov    0x8(%rdx),%rdx                 ;move (%rdx+8) to %rdx or (0x6032d0+8) to %rdx
@@ -559,16 +560,17 @@ Disassembly of section .text:
   40117f:	75 f5                	jne    401176 <phase_6+0x82>          ;if not equal jump to 401176
   401181:	eb 05                	jmp    401188 <phase_6+0x94>          ;else jump to 401188
   401183:	ba d0 32 60 00       	mov    $0x6032d0,%edx                 ;mov some number or pointer to %edx
-  401188:	48 89 54 74 20       	mov    %rdx,0x20(%rsp,%rsi,2)         ;save %rdx to %rsp+(%rsi*2) or %rsp+(%rsi*2) =  %rdx
+  401188:	48 89 54 74 20       	mov    %rdx,0x20(%rsp,%rsi,2)         ;save %rdx to %rsp+(%rsi*2)+32 or %rsp+(%rsi*2)+32 =  %rdx (%rsp+32 = %edx)
   40118d:	48 83 c6 04          	add    $0x4,%rsi                      ;incement %rsi by 4
   401191:	48 83 fe 18          	cmp    $0x18,%rsi                     ;compare %rsi with 24
-  401195:	74 14                	je     4011ab <phase_6+0xb7>          ;if equal to 24 jump to 4011ab
-  401197:	8b 0c 34             	mov    (%rsp,%rsi,1),%ecx             ;move %rsp+(%rsi*1) to %ecx or %ecx = %rsp + (%rsi*1)
+  401195:	74 14                	je     4011ab <phase_6+0xb7>          ;if equal to 24 jump to 4011ab (end of loop)
+  401197:	8b 0c 34             	mov    (%rsp,%rsi,1),%ecx             ;move %rsp+(%rsi*1) to %ecx or %ecx = %rsp + (%rsi*1)(1st element of input numbers)
   40119a:	83 f9 01             	cmp    $0x1,%ecx                      ;compare %ecx with 1
   40119d:	7e e4                	jle    401183 <phase_6+0x8f>          ;if <= 1 then jump to 401183
   40119f:	b8 01 00 00 00       	mov    $0x1,%eax                      ;else move 1 to %eax
   4011a4:	ba d0 32 60 00       	mov    $0x6032d0,%edx                 ;move some pointer to %edx
   4011a9:	eb cb                	jmp    401176 <phase_6+0x82>          ;jump to 401176
+  
   4011ab:	48 8b 5c 24 20       	mov    0x20(%rsp),%rbx                ;move contents of %rsp + 32 to %rbx (%rbx = (%rsp+32))
   4011b0:	48 8d 44 24 28       	lea    0x28(%rsp),%rax                ;compute pointer (%rsp+40) and store in %rax
   4011b5:	48 8d 74 24 50       	lea    0x50(%rsp),%rsi                ;compute pointer (%rsp+80) and store in %rsi
