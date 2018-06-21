@@ -582,6 +582,7 @@ Disassembly of section .text:
   4011cb:	74 05                	je     4011d2 <phase_6+0xde>          ;if equal jump to 4011d2 
   4011cd:	48 89 d1             	mov    %rdx,%rcx                      ;move %rdx to %rcx
   4011d0:	eb eb                	jmp    4011bd <phase_6+0xc9>          ;jump to 4011bd (start of loop)
+  
   4011d2:	48 c7 42 08 00 00 00 	movq   $0x0,0x8(%rdx)                 ;move zero to mem location (%rdx+8)
   4011d9:	00 
   4011da:	bd 05 00 00 00       	mov    $0x5,%ebp                      ;move 5 to %ebp (seems to be a loop)
@@ -593,6 +594,7 @@ Disassembly of section .text:
   4011ee:	48 8b 5b 08          	mov    0x8(%rbx),%rbx                 ;move contents of (%rbx+8) to %rbx
   4011f2:	83 ed 01             	sub    $0x1,%ebp                      ;subtract 1 from %ebp
   4011f5:	75 e8                	jne    4011df <phase_6+0xeb>          ;if not equal to zero jump to 4011df
+  
   4011f7:	48 83 c4 50          	add    $0x50,%rsp                     ;else deallocate 80 bytes on stack
   4011fb:	5b                   	pop    %rbx                           ;restore %rbx
   4011fc:	5d                   	pop    %rbp                           ;restore %rbp

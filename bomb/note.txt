@@ -279,11 +279,54 @@ content of 6 memory locatoin (8 bytes) at %rsp+32 = 0x7fffffffd930
 
 point to take away for the following number entered in int array (4 bytes)
 corrosponding pointer will be stored in pointer array (8 bytes)
-int_array(input)     pointer_array
-    1                   6304544
-    2                   6304528
-    3                   6304512
-    4                   6304496
-    5                   6304480
-    6                   6304464
+int_array(input)     pointer_array        Value
+    1                   6304544           25769804219
+    2                   6304528           21474836957
+    3                   6304512           17179869875
+    4                   6304496           12884902812
+    5                   6304480           8589934760     
+    6                   6304464           4294967628
+
+10. Lines: 0x4011ab-0x4011d0
+
+ptr_val = *new_ptr_array          //mov    0x20(%rsp),%rbx
+next_element = new_ptr_array + 1; //lea    0x28(%rsp),%rax
+end_address = new_ptr_array + 6;  //lea    0x50(%rsp),%rsi
+while(next_element!=end_address)
+{
+  long_val = ptr_val;               //mov    %rbx,%rcx
+  long_val1 = *next_element;        //mov    (%rax),%rdx
+  *(ptr_val+1) = long_val1;         //mov    %rdx,0x8(%rcx)
+  long_val = long_val1//move %rdx to %rcx
+  next_element++;
+}
+testing with input string
+6 4 2 1 5 3
+int_array(input)    pointer_array       pointer_array_value
+  6                     6304464           4294967628
+  4                     6304496           12884902812
+  2                     6304528           21474836957
+  1                     6304544           25769804219
+  5                     6304480           8589934760    
+  3                     6304512           17179869875
+//hand run through
+mov    %rbx,%rcx
+-------loop-------
+mov    (%rax),%rdx
+mov    %rdx,0x8(%rcx)
+add    $0x8,%rax
+mov    %rdx,%rcx
+------------------
+let %rsp=0x7fffffffdbb0
+%rbx = 6304464 (0x6032d0)
+pass1:
+%rax = 0x7FFFFFFFDBD8
+%rcx = 6304464 (0x6032d0)
+%rdx = 6304496 (0x6032f0)
+mem_location: (%rcx)+8 = 6304496 :   (4294967628 + 8) =  6304496    
+%rcx =  6304496 (0x6032f0)
+pass2:
+
+
+
 --------------------------------------------
