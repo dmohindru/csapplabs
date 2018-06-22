@@ -571,19 +571,19 @@ Disassembly of section .text:
   4011a4:	ba d0 32 60 00       	mov    $0x6032d0,%edx                 ;move some pointer to %edx
   4011a9:	eb cb                	jmp    401176 <phase_6+0x82>          ;jump to 401176
   
-  4011ab:	48 8b 5c 24 20       	mov    0x20(%rsp),%rbx                ;move contents of %rsp + 32 to %rbx (%rbx = (%rsp+32))
-  4011b0:	48 8d 44 24 28       	lea    0x28(%rsp),%rax                ;compute pointer (%rsp+40) and store in %rax
-  4011b5:	48 8d 74 24 50       	lea    0x50(%rsp),%rsi                ;compute pointer (%rsp+80) and store in %rsi
-  4011ba:	48 89 d9             	mov    %rbx,%rcx                      ;move %rbx to %rcx or (pointer %rsp+32 to %rcx)
-  4011bd:	48 8b 10             	mov    (%rax),%rdx                    ;move contents of pointer (%rsp+80) to %rdx
-  4011c0:	48 89 51 08          	mov    %rdx,0x8(%rcx)                 ;move %rdx to mem location (%rsp + 32 + 8)
-  4011c4:	48 83 c0 08          	add    $0x8,%rax                      ;increment %rax by 8 (point to next poistion)
-  4011c8:	48 39 f0             	cmp    %rsi,%rax                      ;compare %rax(pointer) with %rsi(%rsp+80)
-  4011cb:	74 05                	je     4011d2 <phase_6+0xde>          ;if equal jump to 4011d2 
-  4011cd:	48 89 d1             	mov    %rdx,%rcx                      ;move %rdx to %rcx
-  4011d0:	eb eb                	jmp    4011bd <phase_6+0xc9>          ;jump to 4011bd (start of loop)
+  4011ab:	48 8b 5c 24 20       	mov    0x20(%rsp),%rbx                ;move pointer value stored at first element of pointer array
+  4011b0:	48 8d 44 24 28       	lea    0x28(%rsp),%rax                ;compute address of second element of pointer array 
+  4011b5:	48 8d 74 24 50       	lea    0x50(%rsp),%rsi                ;compute end address of pointer array
+  4011ba:	48 89 d9             	mov    %rbx,%rcx                      ;move %rbx to %rcx
+  4011bd:	48 8b 10             	mov    (%rax),%rdx                    ;
+  4011c0:	48 89 51 08          	mov    %rdx,0x8(%rcx)                 ;
+  4011c4:	48 83 c0 08          	add    $0x8,%rax                      ;
+  4011c8:	48 39 f0             	cmp    %rsi,%rax                      ;
+  4011cb:	74 05                	je     4011d2 <phase_6+0xde>          ;
+  4011cd:	48 89 d1             	mov    %rdx,%rcx                      ;
+  4011d0:	eb eb                	jmp    4011bd <phase_6+0xc9>          ;
   
-  4011d2:	48 c7 42 08 00 00 00 	movq   $0x0,0x8(%rdx)                 ;move zero to mem location (%rdx+8)
+  4011d2:	48 c7 42 08 00 00 00 	movq   $0x0,0x8(%rdx)                 ;
   4011d9:	00 
   4011da:	bd 05 00 00 00       	mov    $0x5,%ebp                      ;move 5 to %ebp (seems to be a loop)
   4011df:	48 8b 43 08          	mov    0x8(%rbx),%rax                 ;move contents of (%rsp + 32 + 8) to %rax its a pointer
