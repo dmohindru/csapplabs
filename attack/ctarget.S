@@ -775,15 +775,15 @@ Disassembly of section .text:
   4017a7:	90                   	nop
 
 00000000004017a8 <getbuf>:
-  4017a8:	48 83 ec 28          	sub    $0x28,%rsp
-  4017ac:	48 89 e7             	mov    %rsp,%rdi
-  4017af:	e8 8c 02 00 00       	callq  401a40 <Gets>
-  4017b4:	b8 01 00 00 00       	mov    $0x1,%eax
-  4017b9:	48 83 c4 28          	add    $0x28,%rsp
-  4017bd:	c3                   	retq   
-  4017be:	90                   	nop
-  4017bf:	90                   	nop
-
+  4017a8:	48 83 ec 28          	sub    $0x28,%rsp         ;allocate 40 bytes on stack
+  4017ac:	48 89 e7             	mov    %rsp,%rdi          ;move %rsp to %rdi as argument to Gets
+  4017af:	e8 8c 02 00 00       	callq  401a40 <Gets>      ;call Gets
+  4017b4:	b8 01 00 00 00       	mov    $0x1,%eax          ;move 0x1 to %eax as return value
+  4017b9:	48 83 c4 28          	add    $0x28,%rsp         ;deallocate 40 bytes on stack
+  4017bd:	c3                   	retq                      ;return from function
+  4017be:	90                   	nop                       ;use 0x31 as part of exploit string
+  4017bf:	90                   	nop                       ;return address is 0x401976
+                                                          ;we want return address to 0x4017c0
 00000000004017c0 <touch1>:
   4017c0:	48 83 ec 08          	sub    $0x8,%rsp
   4017c4:	c7 05 0e 2d 20 00 01 	movl   $0x1,0x202d0e(%rip)        # 6044dc <vlevel>
