@@ -15,4 +15,7 @@ http://www.cs.utah.edu/~mflatt/past-courses/cs4400/f16/bomb.html
 http://zpalexander.com/binary-bomb-lab-phase-1/
 
 ======================================================
-
+========= Attack Lab related notes ===================
+Walk through for solving attack lab
+https://github.com/magna25/Attack-Lab
+======================================================
