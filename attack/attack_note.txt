@@ -1,0 +1,17 @@
+=================Level 2===============================
+00000000004017a8 <getbuf>
+0000000000401968 <test>:
+break points
+test:
+break points                                %rsp            
+(1)*0x401971(before call to getbuf)        0x5561dca8
+(2)*0x401976(after call to getbuf)         0x5561dca8
+getbuf
+(3)*0x4017a8(first inst of getbuf)         0x5561dca0 (location where return address is stored)
+(4)*0x4017ac(after allocating buf)         0x5561dc78 (start address of %rsp in getbuf)
+(5)*0x4017bd(just before retq)             0x5561dca0
+So accessable stack addresses for our code injection is
+0x5561dc98-0x5561dc78
+so value to be stored as return address 0x000000005561dc98
+address of touch2: 0x00000000004017ec 
+=======================================================
