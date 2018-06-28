@@ -1,2 +1,9 @@
 break *0x401971
 break *0x401976
+break *0x4017a8
+break *0x4017ac
+break *0x4017b4
+break *0x4017bd
+break *0x401a40
+break *0x401a91
+run -q -i ctarget_level2.bin
