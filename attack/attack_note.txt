@@ -158,3 +158,26 @@ fa 97 b9 59 00 00 00 00 /* value of cookie */
 c5 19 40 00 00 00 00 00 /* address of second gadget */
 fa 18 40 00 00 00 00 00 /* address of touch2 function */
 =======================================================
+=================Level 5===============================
+Problems to be solved for phase 5
+1. We need to generate string representation of cookie where on stack/memory and 
+location is predicable and is not overwritten by stack modification by hexmatch function.
+2. We need to pass pointer to above generated string representation into %rdi and call touch 3 function
+
+cookie: 0x59b997fa
+digit   string_representation
+  5         35
+  9         39
+  b         62
+  9         39
+  9         39
+  7         37
+  f         66
+  a         61
+exploit string can consist of 
+1. First 40 bytes as padding all zero
+2. Address of gadget which should execute a pop instruction so that now %rsp now points to string represenation of cookie
+   and moves the value of %rsp to some register may be %rdi
+3. Return address of touch3 function
+
+=======================================================

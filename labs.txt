@@ -18,4 +18,5 @@ http://zpalexander.com/binary-bomb-lab-phase-1/
 ========= Attack Lab related notes ===================
 Walk through for solving attack lab
 https://github.com/magna25/Attack-Lab
+https://github.com/codeKaren/Attack-Lab
 ======================================================
