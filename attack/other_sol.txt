@@ -1,3 +1,6 @@
+/* idea to solve level 5 was take from 
+   https://github.com/codeKaren/Attack-Lab
+   and this file contains solution from above link */
 /* fill the buffer for the first 40 byte */
 <10000>00 00 00 00 00 00 00 00  /* cookie as string */
 <10008>00 00 00 00 00 00 00 00
