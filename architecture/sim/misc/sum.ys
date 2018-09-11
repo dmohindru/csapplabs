@@ -2,3 +2,49 @@
 # Description: 	Iteratively sum linked list elements
 # Author:		Dhruv Mohindru
 # Date:			10/09/2018
+
+# Execution begins at address 0 
+	.pos 0 
+	irmovq 	stack, %rsp		  	# Set up stack pointer  
+	call 	main				# Execute main program
+	halt						# Terminate program 
+
+# Sample linked list
+	.align 8 	
+ele1:
+	.quad 0x00a
+	.quad ele2
+ele2:
+	.quad 0x0b0
+	.quad ele3
+ele3:
+	.quad 0xc00
+	.quad 0
+
+main:
+	irmovq 	ele1, %rdi  		# pass start of linked list as first element 	
+	call 	sum					# sum(linkedList)
+	ret
+# start of linked list in %rdi
+sum:
+	# use %rcx as temperory calculation
+	irmovq	$0, %rax			# set return value to zero
+	irmovq	$0, %rcx			# set %rcx to zero
+	subq	%rdi, %rcx			# test for null pointer
+	je		L2					# jump to end of function on null pointer
+	rrmovq	%rdi, %r8			# move %rsi to %r8
+L1:	
+	mrmovq	(%r8), %r9			# get val into %r8
+	addq	%r9, %rax			# add val to return value
+	mrmovq	8(%r8), %r9			# get pointer to next element
+	irmovq	$0, %rcx			# move constant 0 to %r9
+	subq	%r9, %rcx			# test for null pointer
+	je		L2					# if null pointer jump to end
+	rrmovq	%r9, %r8			# move next pointer to %r8
+	jmp		L1					# jump to start of loop
+L2:
+	ret
+
+# The stack starts here and grows to lower addresses
+	.pos 0x200		
+stack:

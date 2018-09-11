@@ -1,0 +1,19 @@
+Argument passing conventions
+----------------------------
+Argument No.	Register
+	1			%rdi
+	2			%rsi
+	3			%rdx
+	4			%rcx
+	5			%r8
+	6			%r9
+	
+Callee saved register
+---------------------
+%r12, %r13, %r14, %rbx, %rbp
+
+Caller saved register
+---------------------
+All other register other than %rsp are
+caller saved.
+
