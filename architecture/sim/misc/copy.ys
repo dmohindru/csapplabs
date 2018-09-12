@@ -2,3 +2,50 @@
 # Description: 	Copy a source block to a destination block
 # Author:		Dhruv Mohindru
 # Date:			10/09/2018
+# Execution begins at address 0 
+	.pos 0 
+	irmovq 	stack, %rsp		  	# Set up stack pointer  
+	call 	main				# Execute main program
+	halt						# Terminate program 
+
+.align 8
+# Source block
+src:
+	.quad 0x00a
+	.quad 0x0b0
+	.quad 0xc00
+# Destination block
+dest:
+	.quad 0x111
+	.quad 0x222
+	.quad 0x333
+
+
+main:
+	irmovq 	src, %rdi  		# pass pointer to src memory block
+	irmovq	dest, %rsi		# pass pointer to dest memory block
+	irmovq	$3, %rdx		# pass number of element to copy 	
+	call 	copy_block		# sum(linkedList)
+	ret
+# start of src in %rdi, dest in %rsi, len in %rdx
+copy_block:
+	irmovq	$0, %rax		# set initally return value to zero
+	irmovq	$8, %r8			# used as constant 8
+L2:	
+	irmovq	$0, %rcx
+	subq	%rdx, %rcx		# check for len == 0
+	je		L1
+	mrmovq	(%rdi), %r9		# move src block element to register
+	rmmovq	%r9, (%rsi)		# move register to dest block
+	xorq	%r9, %rax		# compute xor
+	addq	%r8, %rdi		# next element of src block
+	addq	%r8, %rsi		# next element of dest block
+	irmovq	$1, %rcx		
+	subq	%rcx, %rdx		# decrement len
+	jmp		L2	
+L1:
+	ret
+
+# The stack starts here and grows to lower addresses
+	.pos 0x200		
+stack:

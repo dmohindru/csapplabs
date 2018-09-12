@@ -2,3 +2,46 @@
 # Description: 	Recursively sum linked list elements
 # Author:		Dhruv Mohindru
 # Date:			10/09/2018
+# Execution begins at address 0 
+	.pos 0 
+	irmovq 	stack, %rsp		  	# Set up stack pointer  
+	call 	main				# Execute main program
+	halt						# Terminate program 
+
+# Sample linked list
+	.align 8 	
+ele1:
+	.quad 0x00a
+	.quad ele2
+ele2:
+	.quad 0x0b0
+	.quad ele3
+ele3:
+	.quad 0xc00
+	.quad 0
+
+main:
+	irmovq 	ele1, %rdi  		# pass start of linked list as first element 	
+	call 	rsum					# sum(linkedList)
+	ret
+# start of linked list in %rdi
+rsum:
+	# use %rcx as temperory calculation
+	irmovq	$0, %rcx			# set %rcx to zero
+	mrmovq	8(%rdi), %r8		# get next pointer
+	subq	%r8, %rcx			# test for null pointer
+	je		L1					# jump to end of function on null pointer
+	mrmovq	(%rdi), %r9			# get val value
+	pushq	%r9					# save ELE->val value on stack
+	rrmovq	%r8, %rdi			# mov next pointer to rdi for next call
+	call 	rsum				# recursively call rsum
+	popq	%r9					# restore ELE->val value from stack
+	addq	%r9, %rax			# add val to return value
+	jmp		L2					# jump to return statement
+L1:
+	mrmovq	(%rdi), %rax		# set return value to ELE->val
+L2:
+	ret
+# The stack starts here and grows to lower addresses
+	.pos 0x200		
+stack:
