@@ -1,0 +1,10 @@
+Score logs
+----------
+Changes made to following files
+
++++++++++++++++++++++++++++
+ncopy:		original file 
+pipe-full:	original file
+Avg. CPE:	15.18
+Score:		0
++++++++++++++++++++++++++++
