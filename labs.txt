@@ -20,3 +20,8 @@ Walk through for solving attack lab
 https://github.com/magna25/Attack-Lab
 https://github.com/codeKaren/Attack-Lab
 ======================================================
+======================================================
+========= Architecture Lab related notes =============
+Solution to architecture lab from 2nd edition
+https://github.com/CtheSky/CSAPP
+======================================================
