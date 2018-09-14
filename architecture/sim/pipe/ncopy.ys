@@ -19,20 +19,27 @@ ncopy:
 	xorq %rax,%rax		# count = 0;
 	andq %rdx,%rdx		# len <= 0?
 	jle Done		# if so, goto Done:
+	#jle Done		# if so, goto Done:
 
 Loop:	
 	mrmovq (%rdi), %r10	# read val from src...		# here we can introduce concept of 
+	
 	rmmovq %r10, (%rsi)	# ...and store it to dst	# load forward
-	andq %r10, %r10		# val <= 0?
-	jle Npos		# if so, goto Npos:
-	irmovq $1, %r10									# implement iaddq here
-	addq %r10, %rax		# count++					# merge there two instruction into 1 inst
+	andq %r10, %r10		# val <= 0?					
+	
+	jle Npos										# if so, goto Npos:
+	#irmovq $1, %r10									# implement iaddq here
+	#addq %r10, %rax		# count++					# merge there two instruction into 1 inst
+	iaddq	$1, %rax		# count++
 Npos:	
-	irmovq $1, %r10									# iaddq will help here
-	subq %r10, %rdx		# len--						# merge there two instruction into 1 inst
-	irmovq $8, %r10									# iaddq will help here
-	addq %r10, %rdi		# src++						# again merge
-	addq %r10, %rsi		# dst++						# iaddq
+	#irmovq $1, %r10									# iaddq will help here
+	#subq %r10, %rdx		# len--						# merge there two instruction into 1 inst
+	iaddq	$-1, %rdx		# len--
+	#irmovq $8, %r10									# iaddq will help here
+	#addq %r10, %rdi		# src++						# again merge
+	#addq %r10, %rsi		# dst++						# iaddq
+	iaddq	$8, %rdi
+	iaddq	$8, %rsi
 	andq %rdx,%rdx		# len > 0?
 	jg Loop			# if so, goto Loop:
 ##################################################################

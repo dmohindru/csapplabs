@@ -8,3 +8,13 @@ pipe-full:	original file
 Avg. CPE:	15.18
 Score:		0
 +++++++++++++++++++++++++++
+ncopy:		added iaddq instruction
+pipe-full:	implemented iaddq instruction
+Avg. CPE:	12.70
+Score:		0
++++++++++++++++++++++++++++
+ncopy:		same as previous one
+pipe-full:	implemented load/forward
+Ave. CPE:	11.70
+Score:		0
++++++++++++++++++++++++++++
