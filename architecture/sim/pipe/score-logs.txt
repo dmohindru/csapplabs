@@ -3,18 +3,51 @@ Score logs
 Changes made to following files
 
 +++++++++++++++++++++++++++
-ncopy:		original file 
-pipe-full:	original file
-Avg. CPE:	15.18
-Score:		0
+ncopy:			original file 
+pipe-full:		original file
+Avg. CPE:		15.18
+Score:			0
+ncopy length:	94 bytes
 +++++++++++++++++++++++++++
-ncopy:		added iaddq instruction
-pipe-full:	implemented iaddq instruction
-Avg. CPE:	12.70
-Score:		0
+ncopy:			added iaddq instruction
+pipe-full:		implemented iaddq instruction
+Avg. CPE:		12.70
+Score:			0
+ncopy lenght:	94 bytes
 +++++++++++++++++++++++++++
-ncopy:		same as previous one
-pipe-full:	implemented load/forward
-Ave. CPE:	11.70
-Score:		0
+ncopy:			same as previous one
+pipe-full:		implemented load/forward
+Ave. CPE:		11.70
+Score:			0
+ncopy length:	94 bytes
++++++++++++++++++++++++++++
+ncopy:			loop unrolling 2X1
+pipe-full:		same as previous one
+Ave. CPE:		10.79
+Score:			0
+ncopy length:	263 bytes
++++++++++++++++++++++++++++
+ncopy:			loop unrolling 4X1
+pipe-full:		same as previous one
+Ave. CPE:		9.65
+Score:			16.9
+ncopy length:	345 bytes
++++++++++++++++++++++++++++
+ncopy:			loop unrolling 8X1
+pipe-full:		same as previous one
+Ave. CPE:		9.55
+Score:			19
+ncopy length:	509 bytes
++++++++++++++++++++++++++++
+ncopy:			loop unrolling 12X1
+pipe-full:		same as previous one
+Ave. CPE:		9.83
+Score:			13.5
+ncopy length:	673 bytes
++++++++++++++++++++++++++++
+ncopy:			loop unrolling 16X1
+pipe-full:		same as previous one
+Ave. CPE:		10.2
+Score:			6.1
+ncopy length:	873 bytes
 +++++++++++++++++++++++++++

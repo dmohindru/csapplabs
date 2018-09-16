@@ -29,32 +29,60 @@ ncopy:
 ##################################################################
 # You can modify this portion
 	# Loop header
-	xorq %rax,%rax		# count = 0;
-	andq %rdx,%rdx		# len <= 0?
-	jle Done		# if so, goto Done:
-	#jle Done		# if so, goto Done:
-
+	xorq 	%rax,%rax		# count = 0;
+	andq 	%rdx,%rdx		# len <= 0?
+	jle 	Done			# if so, goto Done:
+	rrmovq	%rdx, %r9		# setup up limit
+	iaddq	$-1, %r9		# limit = len - K + 1 , K = 2
+	irmovq	$0, %r8			# set up i
+	jmp		Loop_Check:
+	
+############Basic Computations#########################
 Loop:	
-	mrmovq (%rdi), %r10	# read val from src...		# here we can introduce concept of 
-	
-	rmmovq %r10, (%rsi)	# ...and store it to dst	# load forward
-	andq %r10, %r10		# val <= 0?					
-	
-	jle Npos										# if so, goto Npos:
-	#irmovq $1, %r10									# implement iaddq here
-	#addq %r10, %rax		# count++					# merge there two instruction into 1 inst
+	mrmovq 	(%rdi), %r10	# read val from src...		# here we can introduce concept of 
+	rmmovq 	%r10, (%rsi)	# ...and store it to dst	# load forward
+	andq 	%r10, %r10		# val <= 0?					
+	jle 	Npos										# if so, goto Npos:
 	iaddq	$1, %rax		# count++
 Npos:	
-	#irmovq $1, %r10									# iaddq will help here
-	#subq %r10, %rdx		# len--						# merge there two instruction into 1 inst
-	iaddq	$-1, %rdx		# len--
-	#irmovq $8, %r10									# iaddq will help here
-	#addq %r10, %rdi		# src++						# again merge
-	#addq %r10, %rsi		# dst++						# iaddq
 	iaddq	$8, %rdi
 	iaddq	$8, %rsi
-	andq %rdx,%rdx		# len > 0?
-	jg Loop			# if so, goto Loop:
+	
+# Unrolling loop - 2
+	mrmovq 	(%rdi), %r10	# read val from src...		# here we can introduce concept of 
+	rmmovq 	%r10, (%rsi)	# ...and store it to dst	# load forward
+	andq 	%r10, %r10		# val <= 0?					
+	jle 	Npos1										# if so, goto Npos:
+	iaddq	$1, %rax		# count++
+Npos1:
+	iaddq	$8, %rdi
+	iaddq	$8, %rsi
+############Basic Computations#########################
+	iaddq	$2, %r8
+
+Loop_Check:	
+	rrmovq	%r9, %r11		# %r11 for temprory calculation
+	subq	%r8, %r11		# check for i < limit
+	jge		Loop:		# if i < limit jump to loop
+	jmp		Final_Loop_Check
+
+Final_Loop:
+	mrmovq 	(%rdi), %r10	# read val from src...		# here we can introduce concept of 
+	rmmovq 	%r10, (%rsi)	# ...and store it to dst	# load forward
+	andq 	%r10, %r10		# val <= 0?					
+	jle 	Final_Loop_Npos										# if so, goto Npos:
+	iaddq	$1, %rax		# count++
+Final_Loop_Npos:	
+	iaddq	$8, %rdi
+	iaddq	$8, %rsi
+	
+	iaddq	$1, %r8
+Final_Loop_Check:
+	rrmovq	%rdx, %r9
+	subq	%r8, %r9
+	jge		Final_Loop
+
+	
 ##################################################################
 # Do not modify the following section of code
 # Function epilogue.
@@ -71,10 +99,10 @@ EndFun:
 ###############################
 	.align 8
 src:
-	.quad -1
+	.quad 1
 	.quad -2
 	.quad 3
-	.quad 4
+	.quad -4
 	.quad 0xbcdefa # This shouldn't get moved
 
 	.align 16
