@@ -17,13 +17,9 @@ ncopy:
 # You can modify this portion
 	# Loop header
 	xorq 	%rax,%rax		# count = 0;
-	andq 	%rdx,%rdx		# len <= 0?
-	jle 	Done			# if so, goto Done:
-	rrmovq	%rdx, %r9		# setup up limit
-	# setup loop 8X1 loop unrolling
-	iaddq	$-7, %r9		# limit = len - K + 1 , len - (16 - 1)
-	irmovq	$0, %r8			# set up i
-	jmp		Loop_Check:
+	# setup loop 5X1 loop unrolling
+	iaddq	$-5, %rdx		# limit = len - K + 1 , len - (16 - 1)
+	jl		Remain			# if negetive
 	
 ############Basic Computations#########################
 Loop:	
@@ -66,43 +62,15 @@ Npos3:
 	iaddq	$1, %rax		# count++
 Npos4:
 
-# Unrolling loop - 6
-	mrmovq 	40(%rdi), %r10	# read val from src...		# here we can introduce concept of 
-	rmmovq 	%r10, 40(%rsi)	# ...and store it to dst	# load forward
-	andq 	%r10, %r10		# val <= 0?					
-	jle 	Npos5										# if so, goto Npos:
-	iaddq	$1, %rax		# count++
-Npos5:
-
-# Unrolling loop - 7
-	mrmovq 	48(%rdi), %r10	# read val from src...		# here we can introduce concept of 
-	rmmovq 	%r10, 48(%rsi)	# ...and store it to dst	# load forward
-	andq 	%r10, %r10		# val <= 0?					
-	jle 	Npos6										# if so, goto Npos:
-	iaddq	$1, %rax		# count++
-Npos6:
-
-# Unrolling loop - 8
-	mrmovq 	56(%rdi), %r10	# read val from src...		# here we can introduce concept of 
-	rmmovq 	%r10, 56(%rsi)	# ...and store it to dst	# load forward
-	andq 	%r10, %r10		# val <= 0?					
-	jle 	Npos7										# if so, goto Npos:
-	iaddq	$1, %rax		# count++
-Npos7:
-
-
-
-
 ############Basic Computations#########################
-	iaddq	$64, %rdi
-	iaddq	$64, %rsi
-	iaddq	$8, %r8
+	iaddq	$40, %rdi
+	iaddq	$40, %rsi
+	iaddq	$-5, %rdx
+	jg		Loop
 
-Loop_Check:	
-	rrmovq	%r8, %r11		# %r11 for temprory calculation
-	subq	%r9, %r11		# check for i < limit
-	jl		Loop:			# if i < limit jump to loop
-	jmp		Final_Loop_Check
+Remain:
+	iaddq	$5, %rdx
+	je		Done
 
 Final_Loop:
 	mrmovq 	(%rdi), %r10	# read val from src...		# here we can introduce concept of 
@@ -113,14 +81,9 @@ Final_Loop:
 Final_Loop_Npos:	
 	iaddq	$8, %rdi
 	iaddq	$8, %rsi
-	
-	iaddq	$1, %r8
-Final_Loop_Check:
-	rrmovq	%r8, %r9
-	subq	%rdx, %r9
-	jl		Final_Loop
+	iaddq	$-1, %rdx
+	jg		Final_Loop
 
-	
 ##################################################################
 # Do not modify the following section of code
 # Function epilogue.
