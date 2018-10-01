@@ -15,8 +15,8 @@ team_t team = {
     "Dhruv Mohindru",     /* First member full name */
     "dmohindru@gmail.com",  /* First member email address */
 
-    "",                   /* Second member full name (leave blank if none) */
-    ""                    /* Second member email addr (leave blank if none) */
+    "Dhruv Mohindru",                   /* Second member full name (leave blank if none) */
+    "dmohindru1@gmail.com"                    /* Second member email addr (leave blank if none) */
 };
 
 /***************
@@ -39,6 +39,23 @@ void naive_rotate(int dim, pixel *src, pixel *dst)
 	for (j = 0; j < dim; j++)
 	    dst[RIDX(dim-1-j, i, dim)] = src[RIDX(i, j, dim)];
 }
+/* 
+ * rotate unroll 
+*/
+#define copy(a) dst[RIDX(dim-1-j, i+(a), dim)] = src[RIDX(i+(a), j, dim)];
+char rotate_unroll_desc[] = "rotate_unroll: Rotate implemenation using loop unroll technique";
+void rotate_unroll(int dim, pixel *src, pixel *dst)
+{
+	int i, j;
+
+    for (i = 0; i < dim; i += 16) 
+        for (j = 0; j < dim; j++) {
+            copy(0);copy(1);copy(2);copy(3);
+            copy(4);copy(5);copy(6);copy(7);
+            copy(8);copy(9);copy(10);copy(11);
+            copy(12);copy(13);copy(14);copy(15);
+        }
+}
 
 /* 
  * rotate - Your current working version of rotate
@@ -47,7 +64,8 @@ void naive_rotate(int dim, pixel *src, pixel *dst)
 char rotate_descr[] = "rotate: Current working version";
 void rotate(int dim, pixel *src, pixel *dst) 
 {
-    naive_rotate(dim, src, dst);
+    //naive_rotate(dim, src, dst);
+    rotate_unroll(dim, src, dst);
 }
 
 /*********************************************************************
@@ -63,6 +81,7 @@ void register_rotate_functions()
     add_rotate_function(&naive_rotate, naive_rotate_descr);   
     add_rotate_function(&rotate, rotate_descr);   
     /* ... Register additional test functions here */
+    add_rotate_function(&rotate_unroll, rotate_unroll_desc);
 }
 
 
