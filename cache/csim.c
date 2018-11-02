@@ -10,17 +10,44 @@
 #include <stdio.h>
 #include <string.h>
 
+/* Block being represented as unsigned int which hold number of bytes */
+typedef unsigned char block;
+
+/* Single cache line */
+typedef struct {
+	unsigned char LRU_flag;
+	block block_line;
+} cache_line;
+
+/* Single cache set. MIGHT NOT NEED THIS.....
+ */
+cache_line *cache_set;
+
+/* Complete cache memory. Size of cache memory calculated as
+ * cache_memory = sizeof(cache_line) * associativity * num_of_sets 
+ * And accessed as cache_memory[set_number][line_number]
+ */ 
+cache_line **cache_memory;
+
 /* Implemenation steps
  * 1. gather command line arguments with error checking
  * 2. check for file being present specified by -t flag
  * 3. Decide data structure to represent cache with arbitrary 
  *    size of s, E, b.
  * 4. Parse trace file
- * 5. Simulate cache operations with miss, hit, evicit. Think of logic
- *    for evicition based on LRU (least recently used) policy.
- * 6. Implement verbose mode
- * 7. Print reults
+ * 5. Simulate cache operations with miss, hit, evicit.
+ * 6. Think of logic for evicition based on LRU (least recently used) policy.
+ * 7. Implement verbose mode
+ * 8. Print reults
  */
+
+/* Function to create cache memory */
+void create_cache_memory(int set_bits, int e_num, int block_bits)
+{
+	
+}
+
+/* Function to print program usage */
 void print_usage()
 {
 	printf("./csim: Missing required command line argument\n");
@@ -34,13 +61,17 @@ void print_usage()
 }
 int main(int argc, char *argv[])
 { 
+	// Various variable declerations
 	// I think that line[128] declaratoin can be done in a better way
 	char line[128], *end, *ptr, op, *trace_file_str = NULL;
 	FILE *trace_file;
 	char delimiter[] = ",";
-	int set_bits, e_bits, block_bits, cmd_options, print_usage_flag, verbose_flag, bytes;
+	int set_bits, e_num, block_bits, cmd_options, print_usage_flag, verbose_flag, bytes;
 	unsigned long address;
+	// Set various input bits to -1 as a flag if some input bits are not entered
 	set_bits = e_bits = block_bits =  -1;
+	
+	//Process command line arguments
 	while ((cmd_options = getopt(argc, argv, "hvs:E:b:t:")) != -1)
 	{
 		switch(cmd_options)
@@ -57,7 +88,7 @@ int main(int argc, char *argv[])
 					print_usage_flag = 1;
 				break;
 			case 'E':
-				e_bits = strtol(optarg, &end, 10);
+				e_num = strtol(optarg, &end, 10);
 				if (optarg == end) //error in conversion
 					print_usage_flag = 1;
 				break;
@@ -73,7 +104,9 @@ int main(int argc, char *argv[])
 				print_usage_flag = 1;
 		}
 	}
-	if ((print_usage_flag  == 1) || set_bits == -1 || e_bits == -1 || block_bits == -1 || trace_file_str == NULL)
+	
+	// Print usage if as per various conditions
+	if ((print_usage_flag  == 1) || set_bits == -1 || e_num == -1 || block_bits == -1 || trace_file_str == NULL)
 	{
 		print_usage();
 		return 1;
@@ -81,13 +114,15 @@ int main(int argc, char *argv[])
 	
 	//printf("Input values: s=%u, E=%u, b=%u, t=%s\n", set_bits, e_bits, block_bits, trace_file_str);
 	
+	// Open trace file for parsing
 	trace_file = fopen(trace_file_str, "r");
 	if (trace_file == NULL)
 	{
 		perror(trace_file_str);
-		//printf("%s : No such file or directory\n", trace_file_str);
 		return 1;
 	}
+	
+	// Main loop to read trace file and simulate ram
 	while (fgets(line, sizeof(line), trace_file) != NULL)
 	{
 		if (verbose_flag == 1)
