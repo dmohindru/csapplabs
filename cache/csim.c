@@ -16,7 +16,7 @@ typedef unsigned int block;
 /* Single cache line */
 typedef struct {
 	unsigned char LRU_flag;
-	unsigned int tag;
+	int tag;
 } cache_line;
 
 /* Single cache set. MIGHT NOT NEED THIS.....
@@ -30,6 +30,7 @@ cache_line *cache_set;
 typedef struct {
 	unsigned int block_size;
 	unsigned int set_size;
+	unsigned int e_size;
 	cache_line **cache_line_array;
 } cache_mem;
 
@@ -60,9 +61,9 @@ cache_mem  *createCacheMemory(int set_bits, int e_num, int block_bits)
 		printf("Error allocating cache memory structure\n");
 		return NULL;
 	}
-	printf("Created cache memory structure\n");
-	printf("sizeof cache_mem structure: %lu\n", sizeof(cache_mem));
-	printf("Allocated size of cache_mem structure: %lu\n", sizeof(cache_mem_ptr));
+	//printf("Created cache memory structure\n");
+	//printf("sizeof cache_mem structure: %lu\n", sizeof(cache_mem));
+	//printf("Allocated size of cache_mem structure: %lu\n", sizeof(cache_mem_ptr));
 	/* Calculate block_size and set_size as 2^block_bits and 2^set_bits respectively */
 	block_size = 1;
 	for (i = 0; i < block_bits; i++)
@@ -78,32 +79,64 @@ cache_mem  *createCacheMemory(int set_bits, int e_num, int block_bits)
 	
 	cache_mem_ptr->block_size = block_size;
 	cache_mem_ptr->set_size = set_size;
+	cache_mem_ptr->e_size = e_num;
 	
 	/* Now the real stuff. Allocate memory for cache line */
-	//https://www.geeksforgeeks.org/dynamically-allocate-2d-array-c/
-	cache_mem_ptr->cache_line_array = (cache_line **)malloc(sizeof(cache_line) * e_num * set_size);
+	/* Below code is a really cool stuff take from 
+	   https://www.geeksforgeeks.org/dynamically-allocate-2d-array-c/ */
+	cache_mem_ptr->cache_line_array = (cache_line **)malloc(sizeof(cache_line *) * set_size);
 	if(!cache_mem_ptr->cache_line_array)
 	{
 		printf("Error allocating cache line array\n");
 		return NULL;
 	}
-	printf("Created cache line array\n");
+	for (i = 0; i < set_size; i++)
+	{
+		cache_mem_ptr->cache_line_array[i] = (cache_line *)malloc(sizeof(cache_line) * e_num);
+		if(!cache_mem_ptr->cache_line_array[i])
+		{
+			printf("Error allocating cache line\n");
+			return NULL;
+		}
+	}
 	
 	/* Initalize cache_memory */
 	for (i = 0; i < set_size; i++)
 	{
 		for (j = 0; j < e_num; j++)
 		{
-			cache_mem_ptr->cache_line_array[i][j].tag = 0;
-			printf("accessed tag field\n");
+			cache_mem_ptr->cache_line_array[i][j].tag = -1;
 			cache_mem_ptr->cache_line_array[i][j].LRU_flag = 0;
-			printf("accessed tag LRU_flag field\n");
 		}
 	}
 	return cache_mem_ptr;
 	
 }
-
+/* Temp function for cache memory temp stuff */
+void playWithCache(cache_mem *memory)
+{
+	unsigned int sets, e, i, j;
+	sets = memory->set_size;
+	e = memory->e_size;
+	for (i = 0; i < sets; i++)
+	{
+		for (j = 0; j < e; j++)
+		{
+			memory->cache_line_array[i][j].tag = i + j;
+			memory->cache_line_array[i][j].LRU_flag = j; 
+		}
+	}
+	/* Display result */
+	for (i = 0; i < sets; i++)
+	{
+		for (j = 0; j < e; j++)
+		{
+			printf("memory->cache_line_array[%u][%u].tag=%d\n",i, j, memory->cache_line_array[i][j].tag);
+			printf("memory->cache_line_array[%u][%u].LRU_flag=%d\n",i, j, memory->cache_line_array[i][j].LRU_flag);
+		}
+	}
+	
+}
 /* Function to print program usage */
 void printUsage()
 {
@@ -123,8 +156,8 @@ int main(int argc, char *argv[])
 	char line[128], *end, *ptr, op, *trace_file_str = NULL;
 	FILE *trace_file;
 	char delimiter[] = ",";
-	int set_bits, e_num, block_bits, cmd_options, print_usage_flag, verbose_flag, bytes;
-	unsigned long address;
+	int set_bits, e_num, block_bits, cmd_options, print_usage_flag, verbose_flag, i;
+	unsigned long address, set_field_mask, set, tag;
 	/* Set various input bits to -1 as a flag if some input bits are not entered */
 	set_bits = e_num = block_bits =  -1;
 	
@@ -162,19 +195,20 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	printf("Input values: s=%u, E=%u, b=%u, t=%s\n", set_bits, e_num, block_bits, trace_file_str);
+	//printf("Input values: s=%u, E=%u, b=%u, t=%s\n", set_bits, e_num, block_bits, trace_file_str);
 	
 	/* Print usage if as per various conditions */
-	if ((print_usage_flag  == 1) || set_bits == -1 || e_num == -1 || block_bits == -1 || trace_file_str == NULL)
+	if (print_usage_flag  == -1 || set_bits == -1 || e_num == -1 || block_bits == -1 || trace_file_str == NULL)
 	{
+		
 		printUsage();
-		//return 1;
+		return 1;
 	}
 	
 	cache_mem *cache_mem_ptr = createCacheMemory(set_bits, e_num, block_bits);
 	if (!cache_mem_ptr)
 		return 1;
-	
+	//playWithCache(cache_mem_ptr);
 	/* Open trace file for parsing */
 	trace_file = fopen(trace_file_str, "r");
 	if (trace_file == NULL)
@@ -186,18 +220,29 @@ int main(int argc, char *argv[])
 	
 	
 	/* print cache stats just a temp debug stuff */
-	printf("Cache set size: %u\n", cache_mem_ptr->set_size);
-	printf("Cache block size: %u\n", cache_mem_ptr->block_size);
+	//printf("Cache set size: %u\n", cache_mem_ptr->set_size);
+	//printf("Cache block size: %u\n", cache_mem_ptr->block_size);
+	
+	/* set field mask used in extracting set from address */
+	set_field_mask = (unsigned)-1 >> (sizeof(long) * 8 - set_bits);
+	//printf("set field mask: 0x%lX\n", set_field_mask);
 	
 	/* Main loop to read trace file and simulate ram */
 	while (fgets(line, sizeof(line), trace_file) != NULL)
 	{
 		if (verbose_flag == 1)
+		{
+			line[strlen(line)-1] = '\0'; /* get rid of last \n character */
 			printf("%s", line);
+		}
 		if (line[0] != ' ')
 			continue;
+		
+		/* Extract operation */
 		op = line[1];
 		printf("Operation: %c, ", op);
+		
+		/* Extract address */
 		ptr = strtok(line+3, delimiter);
 		address = strtol(ptr, &end, 16);
 		if (ptr == end)
@@ -206,8 +251,10 @@ int main(int argc, char *argv[])
 			printf("Error in address conversion at line %s", line);
 			return 1;
 		}
-		printf("Address: 0x%lx, ", address);
-		ptr = strtok(NULL, delimiter);
+		//printf("Address: 0x%lx, ", address);
+		
+		/* Extract bytes accessed MIGHT NOT NEED THIS */
+		/*ptr = strtok(NULL, delimiter);
 		bytes = strtol(ptr, &end, 16);
 		if (ptr == end)
 		{
@@ -215,10 +262,35 @@ int main(int argc, char *argv[])
 			printf("Error in bytes conversion at line %s", line);
 			return 1;
 		}
-		printf("Bytes: %d\n", bytes);
+		printf("Bytes: %d\n", bytes); */
+		
+		/* Extract set and tag field */
+		set = (address >> block_bits) & set_field_mask;
+		tag = address >> (block_bits + set_bits);
+		//printf("Extracted set field: %lx\n", set);
+		//printf("Extracted tag field: %lx\n", tag);
+		/* check cache memory */
+		for (i = 0; i < e_num; i++)
+		{
+			if(cache_mem_ptr->cache_line_array[set][i].tag == tag)
+			{
+				printf("hit\n");
+				break;
+			}
+		}
+		if (i == e_num) 
+		{
+			/* if reached here its a miss, evict a line as per
+			   LRU policy and set new tag */ 
+			cache_mem_ptr->cache_line_array[set][0].tag = tag;
+			printf("miss\n");
+		}
+		
+		
 	}
 	
 	fclose(trace_file);
+	free(cache_mem_ptr);
     printSummary(0, 0, 0);
     return 0;
 }
