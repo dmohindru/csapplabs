@@ -11,16 +11,11 @@
 #include <string.h>
 #include <time.h>
 
-/* Block being represented as unsigned int which hold number of bytes */
-typedef unsigned int block;
-
 /* Single cache line */
 typedef struct {
 	clock_t LRU_flag;
 	int tag;
 } cache_line;
-
-
 
 /* Complete cache memory. Size of cache memory calculated as
  * cache_memory = sizeof(cache_line) * associativity * num_of_sets 
@@ -122,6 +117,8 @@ void printUsage()
 	printf(" -E <num>\tNumber of lines per set.\n");
 	printf(" -b <num>\tNumber of block offset bits.\n");
 }
+
+/* Main function */
 int main(int argc, char *argv[])
 { 
 	/* Various variable declerations */
@@ -135,8 +132,7 @@ int main(int argc, char *argv[])
 	clock_t current_least_used, previous_least_used = 0;
 	/* Set various input bits to -1 as a flag if some input bits are not entered */
 	set_bits = e_num = block_bits =  -1;
-	
-	num_hits = num_miss = num_evictions = 0;
+	num_hits = num_miss = num_evictions = 0; /* Initalize to zero */
 	
 	/* Process command line arguments */
 	while ((cmd_options = getopt(argc, argv, "hvs:E:b:t:")) != -1)
@@ -172,11 +168,9 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	
 	/* Print usage if as per various conditions */
 	if (print_usage_flag  == -1 || set_bits == -1 || e_num == -1 || block_bits == -1 || trace_file_str == NULL)
 	{
-		
 		printUsage();
 		return 1;
 	}
@@ -184,8 +178,6 @@ int main(int argc, char *argv[])
 	cache_mem *cache_mem_ptr = createCacheMemory(set_bits, e_num, block_bits);
 	if (!cache_mem_ptr)
 		return 1;
-	/* Debug stuff */
-	//printf("Created cache memory\n");
 		
 	/* Open trace file for parsing */
 	trace_file = fopen(trace_file_str, "r");
@@ -197,16 +189,10 @@ int main(int argc, char *argv[])
 	
 	/* set field mask used in extracting set from address */
 	set_field_mask = (unsigned)-1 >> (sizeof(long) * 8 - set_bits);
-	//printf("set field mask: 0x%lX\n", set_field_mask);
-	//int line_no = 0;
+	
 	/* Main loop to read trace file and simulate ram */
 	while (fgets(line, sizeof(line), trace_file) != NULL)
 	{
-		/* Debug stuff */
-		//line_no++;
-		//if (strlen(line) <= 1)
-		//	continue;
-		//printf("fgets read line: %d\n", line_no);
 		if (line[0] != ' ')
 			continue;
 			
@@ -218,14 +204,11 @@ int main(int argc, char *argv[])
 		
 		/* Extract operation */
 		op = line[1];
-		/* Debug stuff */
-		//printf("operation extracted\n");
 		
 		/* Extract address */
 		ptr = strtok(line+3, delimiter);
 		address = strtol(ptr, &end, 16);
-		/* Debug stuff */
-		//printf("address extracted\n");
+		
 		if (ptr == end)
 		{
 			fclose(trace_file);
@@ -242,9 +225,8 @@ int main(int argc, char *argv[])
 		{
 			if(cache_mem_ptr->cache_line_array[set][i].tag == tag)
 			{
-				/* Debug stuff */
-				//printf("inside cache hit block\n");
 				num_hits++;
+				cache_mem_ptr->cache_line_array[set][i].LRU_flag = clock(); /* record lru times */
 				if (verbose_flag == 1)
 					printf(" hit");
 				if (op == 'M')
@@ -260,10 +242,9 @@ int main(int argc, char *argv[])
 		}
 		if (i == e_num) 
 		{
-			/* if reached here its a miss, evict a line as per
-			   LRU policy and set new tag */ 
-			/* Debug stuff */
-			//printf("inside cache miss block\n");
+			/* if reached here its a miss or eviction, evict a line as per
+			   LRU policy and set new tag */  
+			previous_least_used = 0;
 			for (i = 0; i < e_num; i++)
 			{
 				if (cache_mem_ptr->cache_line_array[set][i].LRU_flag == 0)
@@ -274,12 +255,13 @@ int main(int argc, char *argv[])
 				}
 				else
 				{
-					current_least_used = cache_mem_ptr->cache_line_array[set][i].LRU_flag; //record lru times	
+					current_least_used = cache_mem_ptr->cache_line_array[set][i].LRU_flag; /* record lru times */	
 					if (current_least_used <= previous_least_used || previous_least_used == 0)
 					{
 						previous_least_used = current_least_used;
 						victim_line = i;
 					}
+					
 				}
 			}
 			if (victim_line != -1)
@@ -292,6 +274,7 @@ int main(int argc, char *argv[])
 			}
 			else
 			{
+				
 				if (verbose_flag == 1)
 					printf(" miss");
 			}
@@ -309,14 +292,8 @@ int main(int argc, char *argv[])
 				printf("\n");
 		}
 	}
-	/* Debug stuff */
-	//printf("end of simulation loop\n");
 	//fclose(trace_file);
-	/* Debug stuff */
-	//printf("after fclose\n");
 	free(cache_mem_ptr);
-	/* Debug stuff */
-	//printf("after free(cache_mem_ptr)\n");
     printSummary(num_hits, num_miss, num_evictions);
     return 0;
 }
