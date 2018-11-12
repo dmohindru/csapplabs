@@ -25,3 +25,9 @@ https://github.com/codeKaren/Attack-Lab
 Solution to architecture lab from 2nd edition
 https://github.com/CtheSky/CSAPP
 ======================================================
+============ Cache Lab related notes =================
+(This seem to quite close to my thinking)
+https://github.com/zxc479773533/CS-APP3e-labs/blob/master/cachelab/trans.c
+(This is good also)
+https://github.com/ldaochen/CSAPP/blob/master/labs/cache-lab/trans.c
+======================================================

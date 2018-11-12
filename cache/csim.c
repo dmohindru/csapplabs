@@ -14,6 +14,7 @@
 /* Single cache line */
 typedef struct {
 	clock_t LRU_flag;
+	//int LRU_flag;
 	int tag;
 } cache_line;
 
@@ -130,6 +131,7 @@ int main(int argc, char *argv[])
 	int num_hits, num_miss, num_evictions;
 	unsigned long address, set_field_mask, set, tag;
 	clock_t current_least_used, previous_least_used = 0;
+	//int current_least_used, previous_least_used = 0;
 	/* Set various input bits to -1 as a flag if some input bits are not entered */
 	set_bits = e_num = block_bits =  -1;
 	num_hits = num_miss = num_evictions = 0; /* Initalize to zero */
@@ -227,6 +229,7 @@ int main(int argc, char *argv[])
 			{
 				num_hits++;
 				cache_mem_ptr->cache_line_array[set][i].LRU_flag = clock(); /* record lru times */
+				//cache_mem_ptr->cache_line_array[set][i].LRU_flag++; /* record lru times */
 				if (verbose_flag == 1)
 					printf(" hit");
 				if (op == 'M')
@@ -282,6 +285,7 @@ int main(int argc, char *argv[])
 			num_miss++;
 			cache_mem_ptr->cache_line_array[set][i].tag = tag;
 			cache_mem_ptr->cache_line_array[set][i].LRU_flag = clock();
+			//cache_mem_ptr->cache_line_array[set][i].LRU_flag = 0;
 			if (op == 'M')
 			{
 				num_hits++;
