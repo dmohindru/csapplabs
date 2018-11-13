@@ -107,38 +107,59 @@ void trans(int M, int N, int A[N][M], int B[M][N])
 }
 void my_trans_64_64(int M, int N, int A[N][M], int B[M][N])
 {
-	int i, j, k, l, block_size, r0, r1, r2, r3, r4, r5, r6, r7;
-	block_size = 8; // 32 / 4
-	
-	for (l = 0; l < N; l+=block_size)
-	{
-		for(k = 0; k < M; k+=block_size)
-		{
-			for (i = l; i < l + block_size; i++)
-			{
-				for (j = k; j < k + block_size; j+=block_size)
-				{
-					r0 = A[i][j];
-					r1 = A[i][j+1];
-					r2 = A[i][j+2];
-					r3 = A[i][j+3];
-					r4 = A[i][j+4];
-					r5 = A[i][j+5];
-					r6 = A[i][j+6];
-					r7 = A[i][j+7];
-					
-					B[j][i] = r0;
-					B[j+1][i] = r1;
-					B[j+2][i] = r2;
-					B[j+3][i] = r3;
-					B[j+4][i] = r4;
-					B[j+5][i] = r5;
-					B[j+6][i] = r6;
-					B[j+7][i] = r7;
-				}
-			}
+	 int i, j, k, l, t1, t2, t3, t4, t5, t6, t7, t8;
+        for (i = 0; i < N; i += 8) {
+            for (j = 0; j < M; j += 8) {
+                for (k = i; k < i + 4; k++) {
+                    t1 = A[k][j];
+                    t2 = A[k][j + 1];
+                    t3 = A[k][j + 2];
+                    t4 = A[k][j + 3];
+                    t5 = A[k][j + 4];
+                    t6 = A[k][j + 5];
+                    t7 = A[k][j + 6];
+                    t8 = A[k][j + 7];
+
+                    B[j][k] = t1;
+                    B[j + 1][k] = t2;
+                    B[j + 2][k] = t3;
+                    B[j + 3][k] = t4;
+                    B[j][k + 4] = t5;
+                    B[j + 1][k + 4] = t6;
+                    B[j + 2][k + 4] = t7;
+                    B[j + 3][k + 4] = t8;
+                }
+                //this block of code seems misterious
+                //need better explaination
+                for (l = j + 4; l < j + 8; l++) {
+
+                    t5 = A[i + 4][l - 4];
+                    t6 = A[i + 5][l - 4];
+                    t7 = A[i + 6][l - 4];
+                    t8 = A[i + 7][l - 4];
+
+                    t1 = B[l - 4][i + 4];
+                    t2 = B[l - 4][i + 5];
+                    t3 = B[l - 4][i + 6];
+                    t4 = B[l - 4][i + 7];
+
+                    B[l - 4][i + 4] = t5;
+                    B[l - 4][i + 5] = t6;
+                    B[l - 4][i + 6] = t7;
+                    B[l - 4][i + 7] = t8;
+
+                    B[l][i] = t1;
+                    B[l][i + 1] = t2;
+                    B[l][i + 2] = t3;
+                    B[l][i + 3] = t4;
+
+                    B[l][i + 4] = A[i + 4][l];
+                    B[l][i + 5] = A[i + 5][l];
+                    B[l][i + 6] = A[i + 6][l];
+                    B[l][i + 7] = A[i + 7][l];
+                }
+            }
 		}
-	}
 }
 void my_trans_67_61(int M, int N, int A[N][M], int B[M][N])
 {
@@ -204,8 +225,8 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
         my_trans_32_32(M, N, A, B);
     }
     else if (M == 64 && N == 64) {
-        //my_trans_64_64(M, N, A, B);
-        trans(M, N, A, B);
+        my_trans_64_64(M, N, A, B);
+        //trans(M, N, A, B);
     } else {
         //transpose_matrix_67_61(M, N, A, B);
         my_trans_67_61(M, N, A, B);
