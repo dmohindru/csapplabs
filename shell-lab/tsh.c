@@ -18,6 +18,7 @@
 #define MAXARGS     128   /* max args on a command line */
 #define MAXJOBS      16   /* max jobs at any point in time */
 #define MAXJID    1<<16   /* max job ID */
+#define MAXERRMSG	200   /* max error message */	   
 
 /* Job states */
 #define UNDEF 0 /* undefined */
@@ -85,6 +86,9 @@ void app_error(char *msg);
 typedef void handler_t(int);
 handler_t *Signal(int signum, handler_t *handler);
 pid_t Fork();
+void Sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+void Sigemptyset(sigset_t *set);
+void Sigaddset(sigset_t *set, int signum);
 
 /*
  * main - The shell's main routine 
@@ -168,6 +172,7 @@ void eval(char *cmdline)
 {
 	char *argv[MAXARGS]; /* Argument list execve() */
     char buf[MAXLINE];   /* Holds modified command line */
+    char error[MAXERRMSG]; /* Holds error message */
     int bg;              /* Should the job run in bg or fg? */
     pid_t pid;           /* Process id */
     sigset_t mask, prev_mask; /* Signal masks */
@@ -176,58 +181,65 @@ void eval(char *cmdline)
     bg = parseline(buf, argv); 
     if (argv[0] == NULL)  
       return;   /* Ignore empty lines */
+      
+    /* Block SIGCHLD signal here */
+    Sigemptyset(&mask);
+	Sigaddset(&mask, SIGCHLD);
+	Sigprocmask(SIG_BLOCK, &mask, &prev_mask);
     
-    if (!builtin_command(argv)) { 
+    if (!builtin_cmd(argv)) { 
         if ((pid = Fork()) == 0) {   /* Child runs user job =====>*/
             setpgid(0, 0);
+            /* Unblock SIGCHLD message in child */
+            Sigprocmask(SIG_SETMASK, &prev_mask, NULL);
             if (execve(argv[0], argv, environ) < 0) {
-                printf("%s: Command not found.\n", argv[0]);
-                exit(0);
+				sprintf(error,"%s: Command not found.\n", argv[0]);
+                app_error(error);
             }
         }
         /* Parent process shellex */
         else { 
-			
-			Sigemptyset(&mask);
-			Sigaddset(&mask, SIGCHLD);
-			Sigprocmask(SIG_BLOCK, &mask, &prev_mask);
 			if (bg)
 			{
 				if (!addjob(jobs, pid, BG, cmdline)) {
-					printf("Unable to add job to job list. Exiting....\n");
-					exit(0);
+					
+					sprintf(error, "Unable to add job to job list. Exiting....\n");
+					app_error(error);
 				}
 			}
 			else
 			{
 				if (!addjob(jobs, pid, FG, cmdline)) {
-					printf("Unable to add job to job list. Exiting....\n");
-					exit(0);
+					sprintf(error, "Unable to add job to job list. Exiting....\n");
+					app_error(error);
 				}
 			}
-			//=================> start here==============>
 			/* Parent waits for foreground job to terminate */
 			if (!bg) {
-				fg_process = pid; /* Mark foreground process */
-				global_pid = 0;
-				while (!global_pid)
-					sigsuspend(&prev_mask);
+				/* modifications here */
+				//fg_process = pid; /* Mark foreground process */
+				//global_pid = 0;
+				//while (!global_pid)
+				//	sigsuspend(&prev_mask);
+				waitfg(pid);
 			}
 			else
-				printf("[%d] %d %s",global_job_id, pid, cmdline);
+				printf("[%d] (%d) %s",pid2jid(pid), pid, cmdline);
 		}
 		Sigprocmask(SIG_SETMASK, &prev_mask, NULL);
 	}
     /* Process built-in commands */
     else {  
       if (!strcmp(argv[0], "jobs")) {
-        display_jobs();
+		printf("listing jobs\n");
+        listjobs(jobs);
       }
-      else if (!strcmp(argv[0], "fg")) {
-        do_bgfg(FG, argv[1]);
+      else if (!strcmp(argv[0], "fg") || !strcmp(argv[0], "bg")) {
+        printf("Doing fg/bg jobs\n");
+        do_bgfg(argv);
       }
-      else if(!strcmp(argv[0], "bg")) {
-        do_bgfg(BG, argv[1]);
+      else if(!strcmp(argv[0], "kill")) {
+        printf("kill command\n");
       }
     }
     
@@ -297,6 +309,14 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv) 
 {
+     if (!strcmp(argv[0], "quit")) /* quit command */
+		exit(0);  
+    if (!strcmp(argv[0], "&"))    /* Ignore singleton & */
+		return 1;
+	else if(!strcmp(argv[0], "jobs") || !strcmp(argv[0], "bg")
+		  || !strcmp(argv[0], "fg") || !strcmp(argv[0], "kill"))
+		return 1;
+	
     return 0;     /* not a builtin command */
 }
 
@@ -581,5 +601,24 @@ void sigquit_handler(int sig)
     exit(1);
 }
 
+void Sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
+{
+    if (sigprocmask(how, set, oldset) < 0)
+	unix_error("Sigprocmask error");
+    return;
+}
 
+void Sigemptyset(sigset_t *set)
+{
+    if (sigemptyset(set) < 0)
+	unix_error("Sigemptyset error");
+    return;
+}
+
+void Sigaddset(sigset_t *set, int signum)
+{
+    if (sigaddset(set, signum) < 0)
+	unix_error("Sigaddset error");
+    return;
+}
 
