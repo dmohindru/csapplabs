@@ -42,6 +42,8 @@ char prompt[] = "tsh> ";    /* command line prompt (DO NOT CHANGE) */
 int verbose = 0;            /* if true, print additional output */
 int nextjid = 1;            /* next job ID to allocate */
 char sbuf[MAXLINE];         /* for composing sprintf messages */
+volatile sig_atomic_t global_pid; /* Used for parent to wait */
+volatile pid_t fg_process; /* for foreground process */
 
 struct job_t {              /* The job struct */
     pid_t pid;              /* job PID */
@@ -217,14 +219,14 @@ void eval(char *cmdline)
 			/* Parent waits for foreground job to terminate */
 			if (!bg) {
 				/* modifications here */
-				//fg_process = pid; /* Mark foreground process */
-				//global_pid = 0;
-				//while (!global_pid)
-				//	sigsuspend(&prev_mask);
-				waitfg(pid);
+				fg_process = pid; /* Mark foreground process */
+				global_pid = 0;
+				while (!global_pid)
+					sigsuspend(&prev_mask);
+				//waitfg(pid);
 			}
 			else
-				printf("[%d] (%d) %s",pid2jid(pid), pid, cmdline);
+				printf("[%d] (%d) %s", pid2jid(pid), pid, cmdline);
 		}
 		Sigprocmask(SIG_SETMASK, &prev_mask, NULL);
 	}
@@ -325,6 +327,56 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv) 
 {
+    int process, fgbg;
+	struct job_t *found_job;
+	sigset_t mask, prev_mask; /* Signal masks */
+	if (!strcmp(argv[0], "fg"))
+        fgbg = FG;
+    else if(!strcmp(argv[0], "bg"))
+        fgbg = BG;
+    else 
+		return;
+    
+	if (!argv[1])
+	{
+		printf("Please specify job/process num\n");
+		return;
+	}
+	
+	if (argv[1][0] == '%')
+	{
+		process = atoi(&argv[1][1]); //<------- attention here
+		if ((found_job=getjobjid(jobs, process)) == NULL)
+		{
+			printf("%s: No such process\n", argv[1]);
+			return;
+		}
+	}
+	else
+	{
+		process = atoi(argv[1]);
+		if ((found_job=getjobpid(jobs, process)) == NULL)
+		{
+			printf("%s: No such process\n", argv[1]);
+			return;
+		}
+	}
+	if (fgbg == BG) {
+		printf("[%d] %d %s", found_job->jid, found_job->pid, found_job->cmdline);
+		kill(found_job->pid, SIGCONT);
+	}
+	else if(fgbg == FG) {
+		Sigemptyset(&mask);
+		Sigaddset(&mask, SIGCHLD);
+		Sigprocmask(SIG_BLOCK, &mask, &prev_mask);
+        fg_process = found_job->pid;
+        kill(found_job->pid, SIGCONT);
+        global_pid = 0;
+        while (!global_pid)
+			sigsuspend(&prev_mask);
+        Sigprocmask(SIG_SETMASK, &prev_mask, NULL);
+		
+	}
     return;
 }
 
@@ -333,6 +385,7 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
+	
     return;
 }
 
@@ -349,7 +402,7 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig) 
 {
-    return;
+    //return;
 }
 
 /* 
