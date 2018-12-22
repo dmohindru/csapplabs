@@ -330,6 +330,7 @@ void do_bgfg(char **argv)
     int process, fgbg;
 	struct job_t *found_job;
 	sigset_t mask, prev_mask; /* Signal masks */
+	char *process; /* Used for job id or process id */
 	if (!strcmp(argv[0], "fg"))
         fgbg = FG;
     else if(!strcmp(argv[0], "bg"))
