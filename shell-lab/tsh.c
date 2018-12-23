@@ -200,7 +200,7 @@ void eval(char *cmdline)
             /* Unblock SIGCHLD message in child */
             Sigprocmask(SIG_SETMASK, &prev_mask, NULL);
             if (execve(argv[0], argv, environ) < 0) {
-				sprintf(error,"%s: Command not found.\n", argv[0]);
+				sprintf(error,"%s: Command not found", argv[0]);
                 app_error(error);
             }
         }
@@ -342,22 +342,30 @@ void do_bgfg(char **argv)
     
 	if (!job_num)
 	{
-		printf("Please specify job/process num\n");
+		printf("%s command requires PID or %%jobid argument\n", argv[0]);
 		return;
 	}
 	
 	if (job_num[0] == '%')
 	{
 		process = atoi(job_num+1);
+		if (process == 0) {
+			printf("%s: argument must be PID or %%jobid\n", argv[0]);
+			return;
+		}
 		if ((found_job=getjobjid(jobs, process)) == NULL)
 		{
-			printf("%s: No such process\n", argv[1]);
+			printf("%s: No such job\n", argv[1]);
 			return;
 		}
 	}
 	else
 	{
 		process = atoi(job_num);
+		if (process == 0) {
+			printf("%s: argument must be PID or %%jobid\n", argv[0]);
+			return;
+		}
 		if ((found_job=getjobpid(jobs, process)) == NULL)
 		{
 			printf("%s: No such process\n", argv[1]);
@@ -367,20 +375,19 @@ void do_bgfg(char **argv)
 	if (fgbg == BG) {
 		printf("[%d] (%d) %s", found_job->jid, found_job->pid, found_job->cmdline);
 		kill(found_job->pid, SIGCONT);
-    found_job->state = BG; /* Attention here */
+		found_job->state = BG;
 	}
 	else if(fgbg == FG) {
 		Sigemptyset(&mask);
 		Sigaddset(&mask, SIGCHLD);
 		Sigprocmask(SIG_BLOCK, &mask, &prev_mask);
-    fg_process = found_job->pid;
-    kill(found_job->pid, SIGCONT);
-    global_pid = 0;
-    found_job->state = FG; /* Attention here */
-    while (!global_pid)
+		fg_process = found_job->pid;
+		kill(found_job->pid, SIGCONT);
+		global_pid = 0;
+		found_job->state = FG;
+		while (!global_pid)
 			sigsuspend(&prev_mask);
-    Sigprocmask(SIG_SETMASK, &prev_mask, NULL);
-		
+		Sigprocmask(SIG_SETMASK, &prev_mask, NULL);
 	}
     return;
 }
@@ -413,62 +420,50 @@ void sigchld_handler(int sig)
 	 * 3. Child is continued
 	 */
 	pid_t pid;
-  int status;
-  struct job_t *found_job;
-  char error[MAXERRMSG]; /* Holds error message */
+	int status;
+	struct job_t *found_job;
+	char error[MAXERRMSG]; /* Holds error message */
 	/* check for terminating process */
 	while ((global_pid = waitpid(-1, &status, WNOHANG)) > 0) {
-      //delete_jobs(global_pid);
-      if(WIFSIGNALED(status)) {
-        printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(global_pid), global_pid, WTERMSIG(status));
-        deletejob(jobs, global_pid);
-        siglongjmp(buf, 1);
-      }
-      deletejob(jobs, global_pid);
-      if (fg_process > 0) {  
-        fg_process = 0;
-    
-		//siglongjmp(buf, 1);
-	  }
+		if(WIFSIGNALED(status)) {
+			printf("Job [%d] (%d) terminated by signal %d\n", pid2jid(global_pid), global_pid, WTERMSIG(status));
+			deletejob(jobs, global_pid);
+			siglongjmp(buf, 1);
+		}
+		deletejob(jobs, global_pid);
+		if (fg_process > 0) {  
+			fg_process = 0;
+		}
 	}
 	
 	/* check for stopped process */
 	while ((pid = waitpid(-1, &status, WNOHANG|WUNTRACED)) > 0) {
-      /*if (!update_process(pid, STOPPED)) {
-        printf("Unable to update run status of process: %d\n", pid);
-        exit(0);
-      }*/
-      if ((found_job=getjobpid(jobs, pid)) == NULL)
-      {
-        sprintf(error, "Unable to update run status of process: %d\n", pid);
-        app_error(error);
-      }
-      /* Update process run status */
-      found_job->state = ST;
-      if(WIFSTOPPED(status))
-        printf("Job [%d] (%d) stopped by signal %d\n", pid2jid(pid), pid, WSTOPSIG(status));
+		if ((found_job=getjobpid(jobs, pid)) == NULL)
+		{
+			sprintf(error, "Unable to update run status of process: %d\n", pid);
+			app_error(error);
+		}
+		/* Update process run status */
+		found_job->state = ST;
+		if(WIFSTOPPED(status))
+			printf("Job [%d] (%d) stopped by signal %d\n", pid2jid(pid), pid, WSTOPSIG(status));
       
-      if (fg_process > 0) {  
-        fg_process = 0;
-        siglongjmp(buf, 1);
-      }
+		if (fg_process > 0) {  
+			fg_process = 0;
+			siglongjmp(buf, 1);
+		}
 	}
 	
 	/* check for continued process */
 	while ((global_pid = waitpid(-1, NULL, WNOHANG|WCONTINUED)) > 0) {
-      /*if (!update_process(global_pid, RUNNING)) {
-        printf("Unable to update run status of process: %d\n", pid);
-        exit(0);
-      }*/
-      /*if ((found_job=getjobpid(jobs, global_pid)) == NULL)
-      {
-        sprintf(error, "Unable to update run status of process: %d\n", pid);
-        app_error(error);
-      }
-      found_job->state = BG;  Attention here */
-      
+		if ((found_job=getjobpid(jobs, global_pid)) == NULL)
+		{
+			sprintf(error, "Unable to update run status of process: %d\n", pid);
+			app_error(error);
+		}
+		if (found_job->state != FG)
+			found_job->state = BG; /* Attention here. Just a stupid hack */
 	}
-    //return;
 }
 
 /* 
