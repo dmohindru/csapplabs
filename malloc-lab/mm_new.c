@@ -10,12 +10,6 @@
 
 #include "mm.h"
 #include "memlib.h"
-
-/*
- * If NEXT_FIT defined use next fit search, else use first-fit search 
- */
-#define NEXT_FITx
-
 team_t team = {
     /* Team name */
     "dmohindru",
@@ -28,6 +22,11 @@ team_t team = {
     /* Second member's email address (leave blank if none) */
     ""
 };
+
+/*
+ * If NEXT_FIT defined use next fit search, else use first-fit search 
+ */
+#define NEXT_FITx
 
 /* $begin mallocmacros */
 /* Basic constants and macros */

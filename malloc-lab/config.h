@@ -33,6 +33,25 @@
   "binary2-bal.rep",\
   "realloc-bal.rep",\
   "realloc2-bal.rep"
+  
+/*
+ #define DEFAULT_TRACEFILES \
+  "binary-bal.rep",\
+  "fs.rep",\
+  "ls.rep",\
+  "random-bal.rep",\
+  "short2-bal.rep",\
+  "coalescing-bal.rep",\
+  "hostname.rep",\
+  "malloc.rep",\
+  "rm.rep",\
+  "short2.rep",\
+  "corners.rep", \
+  "login.rep", \
+  "perl.rep", \
+  "short1-bal.rep", \
+  "xterm.rep"
+*/
 
 /*
  * This constant gives the estimated performance of the libc malloc
