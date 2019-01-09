@@ -1,0 +1,11 @@
+Malloc tutorials to be followed on web
+dlmalloc 
+http://g.oswego.edu/dl/html/malloc.html
+
+https://danluu.com/malloc-tutorial/
+
+tcmalloc
+http://goog-perftools.sourceforge.net/doc/tcmalloc.html
+
+jemalloc
+
