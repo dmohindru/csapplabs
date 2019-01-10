@@ -31,3 +31,11 @@ https://github.com/zxc479773533/CS-APP3e-labs/blob/master/cachelab/trans.c
 (This is good also)
 https://github.com/ldaochen/CSAPP/blob/master/labs/cache-lab/trans.c
 ======================================================
+============ Malloc Lab related notes ================
+(Lab with score of 98/100)
+https://github.com/mightydeveloper/Malloc-Lab/blob/master/mm.c
+(Few tutorial on simple malloc implementation)
+https://danluu.com/malloc-tutorial/
+https://arjunsreedharan.org/post/148675821737/memory-allocators-101-write-a-simple-memory
+
+======================================================
