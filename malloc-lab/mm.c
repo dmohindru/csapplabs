@@ -58,6 +58,7 @@ team_t team = {
 
 /* Global variables */
 static char *heap_listp = 0;  /* Pointer to first block */  
+static char *free_list = 0; /* Pointer to expclit free list */
 #ifdef NEXT_FIT
 static char *rover;           /* Next fit rover */
 #endif
@@ -77,14 +78,19 @@ static void checkblock(void *bp);
 /* $begin mminit */
 int mm_init(void) 
 {
+    char *new_heap;
     /* Create the initial empty heap */
     if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1) //line:vm:mm:begininit
         return -1;
+    printf("mm_init: extending heap by %d\n", 4*WSIZE);
+    printf("mm_init: value of heap_list after mem_sbrk: %x\n", heap_listp);
     PUT(heap_listp, 0);                          /* Alignment padding */
     PUT(heap_listp + (1*WSIZE), PACK(DSIZE, 1)); /* Prologue header */ 
     PUT(heap_listp + (2*WSIZE), PACK(DSIZE, 1)); /* Prologue footer */ 
     PUT(heap_listp + (3*WSIZE), PACK(0, 1));     /* Epilogue header */
     heap_listp += (2*WSIZE);                     //line:vm:mm:endinit  
+    printf("mm_init: value of heap_list after heap_listp+=2*WSIZE: %x\n", heap_listp);
+    free_list = heap_listp;                     /* Initalize free list to start of heap */
     /* $end mminit */
 
 #ifdef NEXT_FIT
@@ -95,6 +101,7 @@ int mm_init(void)
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) 
         return -1;
+    /* examine contents here */
     return 0;
 }
 /* $end mminit */
@@ -271,6 +278,8 @@ static void *extend_heap(size_t words)
     size = (words % 2) ? (words+1) * WSIZE : words * WSIZE; //line:vm:mm:beginextend
     if ((long)(bp = mem_sbrk(size)) == -1)  
         return NULL;                                        //line:vm:mm:endextend
+    printf("extend_heap: extending heap by %d\n", size);
+    printf("extend_heap: value of bp after mem_sbrk: %x\n", bp);
 
     /* Initialize free block header/footer and the epilogue header */
     PUT(HDRP(bp), PACK(size, 0));         /* Free block header */   //line:vm:mm:freeblockhdr
