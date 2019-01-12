@@ -26,7 +26,7 @@ team_t team = {
 /*
  * If NEXT_FIT defined use next fit search, else use first-fit search 
  */
-#define NEXT_FIT
+#define NEXT_FITx
 
 /* $begin mallocmacros */
 /* Basic constants and macros */
@@ -82,15 +82,15 @@ int mm_init(void)
     /* Create the initial empty heap */
     if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1) //line:vm:mm:begininit
         return -1;
-    printf("mm_init: extending heap by %d\n", 4*WSIZE);
-    printf("mm_init: value of heap_list after mem_sbrk: %x\n", heap_listp);
+    //printf("mm_init: extending heap by %d\n", 4*WSIZE);
+    //printf("mm_init: value of heap_list after mem_sbrk: %x\n", heap_listp);
     PUT(heap_listp, 0);                          /* Alignment padding */
     PUT(heap_listp + (1*WSIZE), PACK(DSIZE, 1)); /* Prologue header */ 
     PUT(heap_listp + (2*WSIZE), PACK(DSIZE, 1)); /* Prologue footer */ 
     PUT(heap_listp + (3*WSIZE), PACK(0, 1));     /* Epilogue header */
     heap_listp += (2*WSIZE);                     //line:vm:mm:endinit  
-    printf("mm_init: value of heap_list after heap_listp+=2*WSIZE: %x\n", heap_listp);
-    free_list = heap_listp;                     /* Initalize free list to start of heap */
+    //printf("mm_init: value of heap_list after heap_listp+=2*WSIZE: %x\n", heap_listp);
+    //free_list = heap_listp;                     /* Initalize free list to start of heap */
     /* $end mminit */
 
 #ifdef NEXT_FIT
@@ -102,6 +102,10 @@ int mm_init(void)
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) 
         return -1;
     /* examine contents here */
+    
+    printf("mm_init: value of free_list : %x\n", free_list);
+    printf("mm_init: reading value of free_list %x\n", GET(free_list));
+
     return 0;
 }
 /* $end mminit */
@@ -140,9 +144,13 @@ void *mm_malloc(size_t size)
     /* No fit found. Get more memory and place the block */
     extendsize = MAX(asize,CHUNKSIZE);                 //line:vm:mm:growheap1
     if ((bp = extend_heap(extendsize/WSIZE)) == NULL)  
+    //if ((free_list = extend_heap(extendsize/WSIZE)) == NULL)  
         return NULL;                                  //line:vm:mm:growheap2
     place(bp, asize);                                 //line:vm:mm:growheap3
+    //place(free_list, asize);                                 //line:vm:mm:growheap3
+    free_list = bp;
     return bp;
+    //return free_list;
 } 
 /* $end mmmalloc */
 
@@ -152,6 +160,7 @@ void *mm_malloc(size_t size)
 /* $begin mmfree */
 void mm_free(void *bp)
 {
+    printf("Inside place mm_free\n");
     /* $end mmfree */
     if (bp == 0) 
         return;
@@ -167,6 +176,9 @@ void mm_free(void *bp)
     PUT(HDRP(bp), PACK(size, 0));
     PUT(FTRP(bp), PACK(size, 0));
     coalesce(bp);
+    PUT(bp, free_list);
+    free_list = bp;
+    
 }
 
 /* $end mmfree */
@@ -278,15 +290,23 @@ static void *extend_heap(size_t words)
     size = (words % 2) ? (words+1) * WSIZE : words * WSIZE; //line:vm:mm:beginextend
     if ((long)(bp = mem_sbrk(size)) == -1)  
         return NULL;                                        //line:vm:mm:endextend
-    printf("extend_heap: extending heap by %d\n", size);
-    printf("extend_heap: value of bp after mem_sbrk: %x\n", bp);
+    //printf("extend_heap: extending heap by %d\n", size);
+    //printf("extend_heap: value of bp after mem_sbrk: %x\n", bp);
 
     /* Initialize free block header/footer and the epilogue header */
     PUT(HDRP(bp), PACK(size, 0));         /* Free block header */   //line:vm:mm:freeblockhdr
     PUT(FTRP(bp), PACK(size, 0));         /* Free block footer */   //line:vm:mm:freeblockftr
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1)); /* New epilogue header */ //line:vm:mm:newepihdr
+    printf("extend_heap: address of end block %x\n", NEXT_BLKP(bp));
+    /* Put address of next free block of expclit list */
+    PUT(bp, NEXT_BLKP(bp));  //line:vm:mm:newepihdr
+    free_list = bp;
+    
 
     /* Coalesce if the previous block was free */
+    //free_list = coalesce(bp);
+    //printf("extend_heap: GET(free_list) %x\n", GET(free_list));
+    printf("extend_heap:free_list: %x\n", free_list);
     return coalesce(bp);                                          //line:vm:mm:returnblock
 }
 /* $end mmextendheap */
@@ -300,19 +320,29 @@ static void *extend_heap(size_t words)
 static void place(void *bp, size_t asize)
 /* $end mmplace-proto */
 {
+    printf("Inside place function\n");
+    printf("bp=%x,azise=%x\n", bp, asize);
     size_t csize = GET_SIZE(HDRP(bp));   
 
     if ((csize - asize) >= (2*DSIZE)) { 
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
+        PUT(NEXT_BLKP(bp), GET(bp)); /* Addition */
         bp = NEXT_BLKP(bp);
         PUT(HDRP(bp), PACK(csize-asize, 0));
         PUT(FTRP(bp), PACK(csize-asize, 0));
+        free_list = bp;
     }
     else { 
         PUT(HDRP(bp), PACK(csize, 1));
         PUT(FTRP(bp), PACK(csize, 1));
+        /* Attention here */
+        printf("place: attention here block\n");
+        free_list = GET(bp);
+        /* free_list_ptr = NEXT_BLKP(bp) */
     }
+    printf("free_list: %x\n", free_list);
+
 }
 /* $end mmplace */
 
@@ -325,6 +355,8 @@ static void *find_fit(size_t asize)
 /* $end mmfirstfit-proto */
 {
     /* $end mmfirstfit */
+    printf("Inside find_fit\n");
+    printf("asize=%x\n", asize);
 
 #ifdef NEXT_FIT 
     /* Next fit search */
@@ -344,13 +376,18 @@ static void *find_fit(size_t asize)
 #else 
     /* $begin mmfirstfit */
     /* First-fit search */
-    void *bp;
+    void *bp = free_list;
+    //printf("find_fit: value of free_list: %x\n", free_list);
+    printf("find_fit: GET(free_list)=%x\n", GET(bp));
+    //printf("find_fit: GET(free_list)=%x\n", GET(free_list));
 
-    for (bp = heap_listp; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+    
+    for (bp = free_list; GET_SIZE(HDRP(bp)) > 0; bp = GET(bp)) {
         if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
             return bp;
         }
     }
+
     return NULL; /* No fit */
 #endif
 }
