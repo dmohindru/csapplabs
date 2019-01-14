@@ -1,0 +1,23 @@
+/* Pseudo code to add a block from free list */
+add_to_free_list(new_free_block)
+    if(free_list != NULL) /* Not the first element in list */
+        SET_PREV_PTR(free_list) = new_free_block
+    SET_NEXT_PTR(new_free_block) = free_list
+    SET_PREV_PTR(new_free_block) = NULL
+    free_list = new_free_block
+ 
+
+
+/* Pseudo code to remove a block from free list */
+remove_from_free_list(block_to_remove)
+    if (GET_PREV_PTR(block_to_remove) == NULL) /* First block of list */
+        free_list = GET_NEXT_PTR(block_to_remove)
+        SET_PREV_PTR(free_list) = NULL
+    else    /* Block other than first block */
+        SET_NEXT_PTR(GET_PREV_PTR(block_to_remove)) = GET_NEXT_PTR(block_to_remove) /* Set next pointer of previous block */
+        if (GET_NEXT_PTR(block_to_remove) != NULL) /* Make sure its not the last block of list */
+            SET_PREV_PTR(GET_NEXT_PTR(block_to_remove)) = GET_PREV_PTR(block_to_remove) /* Set prev pointer of next block */
+
+
+
+
