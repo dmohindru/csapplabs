@@ -75,7 +75,7 @@ void remove_from_free_list(char *bp);
 int mm_init(void) 
 {
     /* Create the initial empty heap */
-    printf("inside mm_init");
+    //printf("inside mm_init");
     if ((heap_listp = mem_sbrk(4*WSIZE)) == (void *)-1) //line:vm:mm:begininit
         return -1;
     PUT(heap_listp, 0);                          /* Alignment padding */
@@ -85,9 +85,7 @@ int mm_init(void)
     heap_listp += (2*WSIZE);                     //line:vm:mm:endinit  
     /* $end mminit */
 
-#ifdef NEXT_FIT
-    rover = heap_listp;
-#endif
+
     /* $begin mminit */
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
@@ -105,7 +103,7 @@ int mm_init(void)
 /* $begin mmmalloc */
 void *mm_malloc(size_t size) 
 {
-    printf("Inside mm_malloc\n");
+    //printf("Inside mm_malloc\n");
     size_t asize;      /* Adjusted block size */
     size_t extendsize; /* Amount to extend heap if no fit */
     char *bp;      
@@ -125,6 +123,7 @@ void *mm_malloc(size_t size)
     else
         asize = DSIZE * ((size + (DSIZE) + (DSIZE-1)) / DSIZE); //line:vm:mm:sizeadjust3
 
+    printf("Malloc request for %d\n", asize);
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {  //line:vm:mm:findfitcall
         place(bp, asize);                  //line:vm:mm:findfitplace
@@ -146,7 +145,7 @@ void *mm_malloc(size_t size)
 /* $begin mmfree */
 void mm_free(void *bp)
 {
-    printf("Inside mm_free\n");
+   // printf("Inside mm_free\n");
     /* $end mmfree */
     if (bp == 0) 
         return;
@@ -154,9 +153,14 @@ void mm_free(void *bp)
     /* $begin mmfree */
     size_t size = GET_SIZE(HDRP(bp));
     /* $end mmfree */
-    if (heap_listp == 0){
-        mm_init();
+    printf("free request for pointer: %p\n", bp);
+    if (free_list == 0){
+        printf("free_list is empty\n");
+        free_list = heap_listp + (2*WSIZE);
     }
+    //if (heap_listp == 0){
+    //    mm_init();
+    //}
     /* $begin mmfree */
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -171,7 +175,7 @@ void mm_free(void *bp)
 /* $begin mmfree */
 static void *coalesce(void *bp) 
 {
-    printf("Inside coalesce\n");
+    //printf("Inside coalesce\n");
     size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
@@ -274,7 +278,7 @@ static void *extend_heap(size_t words)
 {
     char *bp;
     size_t size;
-    printf("Inside extend heap\n");
+    //printf("Inside extend heap\n");
 
     /* Allocate an even number of words to maintain alignment */
     size = (words % 2) ? (words+1) * WSIZE : words * WSIZE; //line:vm:mm:beginextend
@@ -300,7 +304,7 @@ static void *extend_heap(size_t words)
 static void place(void *bp, size_t asize)
 /* $end mmplace-proto */
 {
-    printf("Inside place\n");
+    //printf("Inside place\n");
     size_t csize = GET_SIZE(HDRP(bp));   
 
     if ((csize - asize) >= (2*DSIZE)) { 
@@ -335,9 +339,10 @@ static void *find_fit(size_t asize)
     /* $begin mmfirstfit */
     /* First-fit search */
     void *bp;
-    printf("Inside find fit\n");
-    for (bp = free_list; GET_SIZE(HDRP(bp)) > 0; bp = GET(bp+WSIZE)) {
-        if (!GET_ALLOC(HDRP(bp)) && (asize <= GET_SIZE(HDRP(bp)))) {
+    //printf("Inside find fit\n");
+    //for (bp = free_list; bp && GET_SIZE(HDRP(bp)) > 0; bp = GET(bp+WSIZE)) {
+    for (bp = free_list; bp != NULL; bp = GET(bp+WSIZE)) {
+        if ( asize <= GET_SIZE(HDRP(bp))) {
             return bp;
         }
     }
@@ -354,7 +359,7 @@ static void *find_fit(size_t asize)
 /* Function to add block to list */
 void add_to_free_list(char *bp)
 {
-    printf("Inside add_to_free_list\n");
+    //printf("Inside add_to_free_list\n");
     if (free_list) {
         PUT(free_list, bp);
     }
@@ -366,10 +371,10 @@ void add_to_free_list(char *bp)
 /* Function to remove block from list */
 void remove_from_free_list(char *bp)
 {
-    printf("Inside remove_from_free_list\n");
     if (!GET(bp)) { /* First block of list */
         free_list = (char *)GET(bp+WSIZE); /* Get the next block */
-        PUT(free_list, 0);  /* Set previous block to null */
+        if (free_list)
+            PUT(free_list, 0);  /* Set previous block to null */
     }
     else { /* Other than first block */
         PUT(GET(bp)+WSIZE, GET(bp+WSIZE)); /* Set next pointer */
