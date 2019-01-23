@@ -82,7 +82,9 @@ int mm_init(void)
     PUT(heap_listp + (1*WSIZE), PACK(DSIZE, 1)); /* Prologue header */ 
     PUT(heap_listp + (2*WSIZE), PACK(DSIZE, 1)); /* Prologue footer */ 
     PUT(heap_listp + (3*WSIZE), PACK(0, 1));     /* Epilogue header */
-    heap_listp += (2*WSIZE);                     //line:vm:mm:endinit  
+    heap_listp += (2*WSIZE);                     //line:vm:mm:endinit 
+    printf("mm_init: printing value of heap_listp\n");
+    printblock(heap_listp); 
     /* $end mminit */
 
 
@@ -92,6 +94,8 @@ int mm_init(void)
     if (extend_heap(CHUNKSIZE/WSIZE) == NULL) 
         return -1;
     free_list = heap_listp + (2*WSIZE); /* Point free list start of free block allocated */
+    printf("mm_init: printing value of free_list\n");
+    printblock(free_list);
     add_to_free_list(free_list);
     return 0;
 }
@@ -132,6 +136,7 @@ void *mm_malloc(size_t size)
 
     /* No fit found. Get more memory and place the block */
     extendsize = MAX(asize,CHUNKSIZE);                 //line:vm:mm:growheap1
+    // maybe call add to free list here
     if ((bp = extend_heap(extendsize/WSIZE)) == NULL)  
         return NULL;                                  //line:vm:mm:growheap2
     place(bp, asize);                                 //line:vm:mm:growheap3
@@ -155,12 +160,13 @@ void mm_free(void *bp)
     /* $end mmfree */
     printf("free request for pointer: %p\n", bp);
     if (free_list == 0){
-        printf("free_list is empty\n");
-        free_list = heap_listp + (2*WSIZE);
+        //printf("free_list is empty\n");
+        //free_list = heap_listp + (2*WSIZE);
+        mm_init();
     }
-    //if (heap_listp == 0){
-    //    mm_init();
-    //}
+    /*if (heap_listp == 0){
+        mm_init();
+    }*/
     /* $begin mmfree */
 
     PUT(HDRP(bp), PACK(size, 0));
@@ -182,6 +188,7 @@ static void *coalesce(void *bp)
     void *adjesent_bp;
 
     if (prev_alloc && next_alloc) {            /* Case 1 */
+        add_to_free_list(bp);
         return bp;
     }
 
@@ -191,6 +198,7 @@ static void *coalesce(void *bp)
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size,0));
+        add_to_free_list(bp);
     }
 
     else if (!prev_alloc && next_alloc) {      /* Case 3 */
@@ -200,6 +208,8 @@ static void *coalesce(void *bp)
         PUT(FTRP(bp), PACK(size, 0));
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
         bp = PREV_BLKP(bp);
+        add_to_free_list(bp);
+        
     }
 
     else {                                     /* Case 4 */
@@ -212,9 +222,10 @@ static void *coalesce(void *bp)
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
         bp = PREV_BLKP(bp);
+        add_to_free_list(bp);
     }
     /* $end mmfree */
-    add_to_free_list(bp);
+    
 
     /* $begin mmfree */
     return bp;
@@ -314,7 +325,8 @@ static void place(void *bp, size_t asize)
         bp = NEXT_BLKP(bp);
         PUT(HDRP(bp), PACK(csize-asize, 0));
         PUT(FTRP(bp), PACK(csize-asize, 0));
-        add_to_free_list(bp);
+        //add_to_free_list(bp);
+        coalesce(bp);
 
     }
     else { 
