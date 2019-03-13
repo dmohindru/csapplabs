@@ -170,17 +170,6 @@ void mm_free(void *bp)
 
     /* $begin mmfree */
     size_t size = GET_SIZE(HDRP(bp));
-    /* $end mmfree */
-    //printf("free request for pointer: %p\n", bp);
-    //if (free_list == 0){
-        //printf("free_list is empty\n");
-        //free_list = heap_listp + (2*WSIZE);
-    //    mm_init();
-    //}
-    /*if (heap_listp == 0){
-        mm_init();
-    }*/
-    /* $begin mmfree */
 
     PUT(HDRP(bp), PACK(size, 0));
     PUT(FTRP(bp), PACK(size, 0));
@@ -198,12 +187,7 @@ static void *coalesce(void *bp)
     size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp)));
     size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
-    //void *adjesent_bp;
-
-    /*if (prev_alloc && next_alloc) {            
-        add_to_free_list(bp);
-        return bp;
-    }*/
+    
 
     if (prev_alloc && !next_alloc) {      /* Case 2 */
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
