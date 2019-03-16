@@ -20,7 +20,7 @@ void clienterror(int fd, char *cause, char *errnum,
 		 char *shortmsg, char *longmsg);
 void read_requesthdrs(rio_t *rp);
 /* Function to extract host and query path from request header */
-void host_query(char *src, char *host, char *query); 
+int host_query(char *src, char *host, char *query, char *port); 
 int main(int argc, char *argv[])
 {
     int listenfd, connfd;
@@ -50,8 +50,10 @@ int main(int argc, char *argv[])
 
 void doit(int fd)
 {
-    rio_t rio;
-    char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE], host[MAXLINE], query[MAXLINE];
+    rio_t rio, rio_server;
+    int clientfd;
+    char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE], 
+         host[MAXLINE], query[MAXLINE], port[MAXLINE];
 
     Rio_readinitb(&rio, fd);
     if (!Rio_readlineb(&rio, buf, MAXLINE))  //line:netp:doit:readrequest
@@ -63,7 +65,18 @@ void doit(int fd)
                     "Proxy does not implement this method");
         return;
     }
-    host_query(uri, host, query);
+    if (!host_query(uri, host, query, port))
+    {
+        printf("Proxy error: Invalid URL\n");
+        return;
+    }
+    /* Establish connect with main server */
+    clientfd  = Open_clientfd(host, port);
+    if (clientfd > -1)
+        printf("Connect established with host: %s at port %s\n", host, port);
+    else
+        printf("Connect not established with host: %s at port %s\n", host, port);
+    
     read_requesthdrs(&rio);    
 
 }
@@ -80,11 +93,40 @@ void read_requesthdrs(rio_t *rp)
     return;
 }
 
-void host_query(char *src, char *host, char *query)
+int host_query(char *src, char *host, char *query, char *port)
 {
-    printf("src: %s\n", src);
-    printf("host: %s\n", host);
-    printf("query: %s\n", query);
+    
+    char *temp = strstr(src, "://"); 
+    if (temp == NULL) /* Invalid URL */
+        return 0;
+    temp+= 3;
+    temp = strstr(temp, "/");
+    
+    /* Copy host part */
+    strncpy(host, src, temp-src);
+    /* Copy query part */
+    strcpy(query, temp);
+    /* Now extract port from url */
+    temp = strstr(host, ":");
+    temp+=1;
+    temp = strstr(temp, ":");
+    if (temp != NULL)
+    {
+        /* Found it */
+        strcpy(port, temp+1);
+        *temp = 0;
+    }
+    else
+    {
+        /* Default port */
+        strcpy(port, "80");
+    }
+    
+    //printf("src: %s\n", src);
+    //printf("host: %s\n", host);
+    //printf("query: %s\n", query);
+    //printf("port: %s\n", port);
+    return 1;
 }
 
 void clienterror(int fd, char *cause, char *errnum, 
