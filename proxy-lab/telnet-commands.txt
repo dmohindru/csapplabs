@@ -1,0 +1,2 @@
+open localhost 2200
+GET http://localhost:2100/ HTTP/1.1

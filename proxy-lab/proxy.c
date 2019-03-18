@@ -18,9 +18,9 @@ static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64;
 void doit(int fd);
 void clienterror(int fd, char *cause, char *errnum, 
 		 char *shortmsg, char *longmsg);
-void rw_requesthdrs(rio_t *rp, int clientfd);
-void read_responsehdrs(rio_t *rp);
-void my_temp_function(char *query);
+void rw_requesthdrs(rio_t *rp, int clientfd); 
+int rw_responsehdrs(rio_t *rp, int clientfd);
+void my_temp_function(int fd);
 /* Function to extract host and query path from request header */
 int host_query(char *src, char *host, char *query, char *port); 
 int main(int argc, char *argv[])
@@ -35,18 +35,18 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "usage: %s <port>\n", argv[0]);
 	exit(1);
     }
-    strcpy(query, "/");
-    my_temp_function(query);
-    //listenfd = Open_listenfd(argv[1]);
-    //while (1) {
-        /*clientlen = sizeof(clientaddr);
+    //strcpy(query, "/");
+    //my_temp_function(query);
+    listenfd = Open_listenfd(argv[1]);
+    while (1) {
+        clientlen = sizeof(clientaddr);
 	    connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
         Getnameinfo((SA *) &clientaddr, clientlen, hostname, MAXLINE, 
                     port, MAXLINE, 0);
-        printf("Accepted connection from (%s, %s)\n", hostname, port);*/
-	    //doit(connfd);
-        //Close(connfd);                                            //line:netp:tiny:close
-    //}
+        printf("Accepted connection from (%s, %s)\n", hostname, port);
+	    doit(connfd);
+        Close(connfd);                                            //line:netp:tiny:close
+    }
     //printf("%s", user_agent_hdr);
     return 0;
 }
@@ -54,12 +54,13 @@ int main(int argc, char *argv[])
 void doit(int fd)
 {
     rio_t rio, rio_server;
-    int clientfd;
+    int serverfd, content_len;
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE], 
-         host[MAXLINE], query[MAXLINE], port[MAXLINE], response[MAXBUF];
+         host[MAXLINE], query[MAXLINE], port[MAXLINE], *response;
 
     
     Rio_readinitb(&rio, fd);
+    /* Read GET command from client */
     if (!Rio_readlineb(&rio, buf, MAXLINE))  //line:netp:doit:readrequest
         return;
     printf("%s", buf);
@@ -69,6 +70,8 @@ void doit(int fd)
                     "Proxy does not implement this method");
         return;
     }
+    //my_temp_function(fd);
+    
     if (!host_query(uri, host, query, port))
     {
         printf("Proxy error: Invalid URL\n");
@@ -82,46 +85,62 @@ void doit(int fd)
     printf("Before Open_clientfd\n");
     
     
-    clientfd  = Open_clientfd(host, port);
+    serverfd  = Open_clientfd(host, port);
     //clientfd  = Open_clientfd("localhost", "2100");
-    Rio_readinitb(&rio_server, clientfd);
+    Rio_readinitb(&rio_server, serverfd);
     //printf("After Open_clientfd\n");
-    /*if (clientfd > -1) {
-        printf("Connect established with host: %s at port: %s\n", host, port);
-        Rio_readinitb(&rio_server, clientfd);
-    }
-    else {
-        printf("Connect not established with host: %s at port: %s\n", host, port);
-        return;
-    }*/
+    
     
     /* Write GET request to tiny server */
-    //sprintf(buf, "GET %s HTTP/1.0", query);
-    sprintf(buf, "GET / HTTP/1.0");
-    printf("buf=%s\n", buf);
-    Rio_writen(clientfd, buf, strlen(buf));
-    //rw_requesthdrs(&rio, clientfd);
-    //read_responsehdrs(&rio_server);
-    //Rio_readnb(clientfd, response, sizeof(response));
-    //printf("Response: %s\n", response);
-    //Rio_writen(fd, response, sizeof(response));
+    snprintf(buf, MAXLINE, "GET %s HTTP/1.0", query);
+    
+    //printf("buf=%s\n", buf);
+    Rio_writen(serverfd, buf, strlen(buf));
+
+    /* Read request header from client and forward to server */
+    rw_requesthdrs(&rio, serverfd);
+
+    /* Read respose header from server and forward to client */
+    content_len = rw_responsehdrs(&rio_server, fd);
+    
+    /* Read response data from server */
+    response = (char *) Malloc(content_len);
+    Rio_readnb(&rio_server, response, content_len);
+    printf("Displaying response from server\n");
+    printf("%s", response);
+
+    /* Write response data to client */
+    Rio_writen(fd, response, content_len);
+    
 }
-void rw_requesthdrs(rio_t *rp, int clientfd) 
+
+/* Function to read request header from client and forward to server 
+params: 
+rp = rio_t struct for client request
+serverfd = descriptor for server 
+*/
+
+void rw_requesthdrs(rio_t *rp, int serverfd) 
 {
     char buf[MAXLINE];
 
     Rio_readlineb(rp, buf, MAXLINE);
     printf("%s", buf);
-    //Rio_writen(clientfd, buf, strlen(buf));
+    Rio_writen(serverfd, buf, strlen(buf));
     while(strcmp(buf, "\r\n")) {          //line:netp:readhdrs:checkterm
 	    Rio_readlineb(rp, buf, MAXLINE);
 	    printf("%s", buf);
-        //Rio_writen(clientfd, buf, strlen(buf));
+        Rio_writen(serverfd, buf, strlen(buf));
     }
     return;
 }
 
-void read_responsehdrs(rio_t *rp)
+/* Function to read respose header from server and forward to client 
+params: 
+rp = rio_t struct for server response
+clientfd = descriptor for client 
+*/
+int rw_responsehdrs(rio_t *rp, int clientfd)
 {
     char buf[MAXLINE];
     printf("-----Response from server-------\n");
@@ -146,9 +165,17 @@ int host_query(char *src, char *host, char *query, char *port)
     temp1 = strstr(temp, "/");
     
     /* Copy host part */
-    strncpy(host, temp, temp1-temp);
-    /* Copy query part */
-    strcpy(query, temp1);
+    if (temp1 == NULL) {
+        strcpy(host, temp);
+        strcpy(query, "/");
+    }
+    else
+    {
+        strncpy(host, temp, temp1-temp);
+        /* Copy query part */
+        strcpy(query, temp1);
+    }
+
     /* Now extract port from url */
     temp = strstr(host, ":");
     if (temp != NULL)
@@ -163,10 +190,6 @@ int host_query(char *src, char *host, char *query, char *port)
         strcpy(port, "80");
     }
     
-    //printf("src: %s\n", src);
-    //printf("host: %s\n", host);
-    //printf("query: %s\n", query);
-    //printf("port: %s\n", port);
     return 1;
 }
 
@@ -192,25 +215,19 @@ void clienterror(int fd, char *cause, char *errnum,
     Rio_writen(fd, body, strlen(body));
 }
 
-void my_temp_function(char *query)
+void my_temp_function(int fd)
 {
-    char buf[MAXLINE], title[MAXLINE], title_value[MAXLINE], *response_buf;
+    char buf[MAXLINE], title[MAXLINE], title_value[MAXLINE], *response_buf, query[MAXLINE];
     int clientfd, content_len = 0;
     rio_t rio;
     /* Connect to server and send read request */
     clientfd = Open_clientfd("localhost", "2100");
     Rio_readinitb(&rio, clientfd);
     
-    /*while (Fgets(buf, MAXLINE, stdin) != NULL) {
-	    Rio_writen(clientfd, buf, strlen(buf));
-	    //Rio_readlineb(&rio, buf, MAXLINE);
-	    //Fputs(buf, stdout);
-    }*/
-    
-    //sprintf(buf, "GET %s HTTP/1.0", query);
-    //printf("%s\n", buf);
+    strcpy(query, "/home.html");
+    snprintf(buf, MAXLINE, "GET %s HTTP/1.0\n", query);
     //strcpy(buf,"GET / HTTP/1.0\n");
-    strcpy(buf,"GET /csapp.h HTTP/1.0\n");
+    //strcpy(buf,"GET /home.html HTTP/1.0\n");
     Rio_writen(clientfd, buf, strlen(buf));
     strcpy(buf, "\r\n");
     Rio_writen(clientfd, buf, strlen(buf));
@@ -226,11 +243,17 @@ void my_temp_function(char *query)
             content_len = atoi(title_value);
             printf("Content is %d bytes long\n", content_len);
         }
+        /* Write received header to client */
+        Rio_writen(fd, buf, strlen(buf));
     }
     response_buf = (char *) Malloc(content_len);
     Rio_readnb(&rio, response_buf, content_len);
     printf("Displaying response from server\n");
     printf("%s", response_buf);
+    /* Write response data to client */
+    Rio_writen(fd, response_buf, content_len);
+
+    Free(response_buf);
 
     Close(clientfd);
 
