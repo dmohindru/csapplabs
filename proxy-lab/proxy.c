@@ -26,7 +26,7 @@ int host_query(char *src, char *host, char *query, char *port);
 int main(int argc, char *argv[])
 {
     int listenfd, connfd;
-    char hostname[MAXLINE], port[MAXLINE], query[MAXLINE];
+    char hostname[MAXLINE], port[MAXLINE];
     socklen_t clientlen;
     struct sockaddr_storage clientaddr;
 
@@ -56,7 +56,8 @@ void doit(int fd)
     rio_t rio, rio_server;
     int serverfd, content_len;
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE], 
-         host[MAXLINE], query[MAXLINE], port[MAXLINE], *response;
+         host[MAXLINE], query[MAXLINE], port[MAXLINE];
+    void *response;
 
     
     Rio_readinitb(&rio, fd);
@@ -92,7 +93,7 @@ void doit(int fd)
     
     
     /* Write GET request to tiny server */
-    snprintf(buf, MAXLINE, "GET %s HTTP/1.0", query);
+    snprintf(buf, MAXLINE, "GET %s HTTP/1.0\n", query);
     
     //printf("buf=%s\n", buf);
     Rio_writen(serverfd, buf, strlen(buf));
@@ -104,10 +105,11 @@ void doit(int fd)
     content_len = rw_responsehdrs(&rio_server, fd);
     
     /* Read response data from server */
-    response = (char *) Malloc(content_len);
+    //response = (char *) Malloc(content_len);
+    response =  Malloc(content_len);
     Rio_readnb(&rio_server, response, content_len);
-    printf("Displaying response from server\n");
-    printf("%s", response);
+    //printf("Displaying response from server\n");
+    //printf("%s", response);
 
     /* Write response data to client */
     Rio_writen(fd, response, content_len);
@@ -132,6 +134,8 @@ void rw_requesthdrs(rio_t *rp, int serverfd)
 	    printf("%s", buf);
         Rio_writen(serverfd, buf, strlen(buf));
     }
+    /* finally send headers terminating string */
+    Rio_writen(serverfd, buf, strlen(buf));
     return;
 }
 
@@ -142,16 +146,26 @@ clientfd = descriptor for client
 */
 int rw_responsehdrs(rio_t *rp, int clientfd)
 {
-    char buf[MAXLINE];
+    char buf[MAXLINE], title[MAXLINE], title_value[MAXLINE];
+    int content_len = 0;
     printf("-----Response from server-------\n");
 
     Rio_readlineb(rp, buf, MAXLINE);
     printf("%s", buf);
+    Rio_writen(clientfd, buf, strlen(buf));
     while(strcmp(buf, "\r\n")) {          //line:netp:readhdrs:checkterm
 	    Rio_readlineb(rp, buf, MAXLINE);
 	    printf("%s", buf);
+        sscanf(buf, "%s %s", title, title_value);
+        if (!strcmp("Content-length:", title)) {
+            content_len = atoi(title_value);
+            printf("Content is %d bytes long\n", content_len);
+        }
+        Rio_writen(clientfd, buf, strlen(buf));
     }
-
+    /* finally send response terminating string */
+    Rio_writen(clientfd, buf, strlen(buf));
+    return content_len;
 }
 
 int host_query(char *src, char *host, char *query, char *port)
