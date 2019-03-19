@@ -7,6 +7,10 @@
 
 /* You won't lose style points for including this long line in your code */
 static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n";
+static const char *host_fmt_hdr = "Host: %s\r\n"; /* Host header format */
+static const char *connection_hdr = "Connection: close\r\n";
+static const char *proxy_connection_hdr = "Proxy-Connection: close\r\n";
+static const char *eof_hdr = "\r\n";
 
 /* Basic idea for sequential proxy
 1. Parse GET request
@@ -18,11 +22,11 @@ static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64;
 void doit(int fd);
 void clienterror(int fd, char *cause, char *errnum, 
 		 char *shortmsg, char *longmsg);
-void rw_requesthdrs(rio_t *rp, int clientfd); 
+void rw_requesthdrs(rio_t *rp, int clientfd, char *host, char *query); 
 int rw_responsehdrs(rio_t *rp, int clientfd);
 void my_temp_function(int fd);
 /* Function to extract host and query path from request header */
-int host_query(char *src, char *host, char *query, char *port); 
+int parse_uri(char *src, char *host, char *query, char *port); 
 int main(int argc, char *argv[])
 {
     int listenfd, connfd;
@@ -53,16 +57,16 @@ int main(int argc, char *argv[])
 
 void doit(int fd)
 {
-    rio_t rio, rio_server;
+    rio_t rio_client, rio_server;
     int serverfd, content_len;
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE], 
          host[MAXLINE], query[MAXLINE], port[MAXLINE];
     void *response;
 
     
-    Rio_readinitb(&rio, fd);
+    Rio_readinitb(&rio_client, fd);
     /* Read GET command from client */
-    if (!Rio_readlineb(&rio, buf, MAXLINE))  //line:netp:doit:readrequest
+    if (!Rio_readlineb(&rio_client, buf, MAXLINE))  //line:netp:doit:readrequest
         return;
     printf("%s", buf);
     sscanf(buf, "%s %s %s", method, uri, version);
@@ -73,7 +77,7 @@ void doit(int fd)
     }
     //my_temp_function(fd);
     
-    if (!host_query(uri, host, query, port))
+    if (!parse_uri(uri, host, query, port))
     {
         printf("Proxy error: Invalid URL\n");
         return;
@@ -84,22 +88,24 @@ void doit(int fd)
     printf("query: %s\n", query);
     printf("port: %s\n", port);
     printf("Before Open_clientfd\n");
-    
-    
+        
     serverfd  = Open_clientfd(host, port);
-    //clientfd  = Open_clientfd("localhost", "2100");
+    if (serverfd < 0) {
+        printf("Unable to connect to server: %s\n", host);
+        return;
+    }
     Rio_readinitb(&rio_server, serverfd);
     //printf("After Open_clientfd\n");
     
     
     /* Write GET request to tiny server */
-    snprintf(buf, MAXLINE, "GET %s HTTP/1.0\n", query);
+    //snprintf(buf, MAXLINE, "GET %s HTTP/1.0\r\n", query);
     
     //printf("buf=%s\n", buf);
-    Rio_writen(serverfd, buf, strlen(buf));
+    //Rio_writen(serverfd, buf, strlen(buf));
 
     /* Read request header from client and forward to server */
-    rw_requesthdrs(&rio, serverfd);
+    rw_requesthdrs(&rio_client, serverfd);
 
     /* Read respose header from server and forward to client */
     content_len = rw_responsehdrs(&rio_server, fd);
@@ -117,32 +123,29 @@ void doit(int fd)
 }
 
 /* Function to read request header from client and forward to server 
-params: 
-rp = rio_t struct for client request
-serverfd = descriptor for server 
+params: rp = rio_t struct for client request
+        serverfd = descriptor for server 
 */
 
-void rw_requesthdrs(rio_t *rp, int serverfd) 
+void rw_requesthdrs(rio_t *rp, int serverfd, char *host, char *query) 
 {
-    char buf[MAXLINE];
+    char buf[MAXLINE], request_hrd[MAXLINE];
 
-    Rio_readlineb(rp, buf, MAXLINE);
+    /*Rio_readlineb(rp, buf, MAXLINE);
     printf("%s", buf);
     Rio_writen(serverfd, buf, strlen(buf));
     while(strcmp(buf, "\r\n")) {          //line:netp:readhdrs:checkterm
 	    Rio_readlineb(rp, buf, MAXLINE);
 	    printf("%s", buf);
         Rio_writen(serverfd, buf, strlen(buf));
-    }
+    }*/
     /* finally send headers terminating string */
-    Rio_writen(serverfd, buf, strlen(buf));
-    return;
+    //Rio_writen(serverfd, buf, strlen(buf));
 }
 
 /* Function to read respose header from server and forward to client 
-params: 
-rp = rio_t struct for server response
-clientfd = descriptor for client 
+params: rp = rio_t struct for server response
+        clientfd = descriptor for client 
 */
 int rw_responsehdrs(rio_t *rp, int clientfd)
 {
@@ -168,7 +171,7 @@ int rw_responsehdrs(rio_t *rp, int clientfd)
     return content_len;
 }
 
-int host_query(char *src, char *host, char *query, char *port)
+int parse_uri(char *src, char *host, char *query, char *port)
 {
     
     char *temp, *temp1;
