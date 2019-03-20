@@ -7,9 +7,14 @@
 
 /* You won't lose style points for including this long line in your code */
 static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n";
-static const char *host_fmt_hdr = "Host: %s\r\n"; /* Host header format */
+//static const char *host_fmt_hdr = "Host: %s\r\n"; /* Host header format */
 static const char *connection_hdr = "Connection: close\r\n";
 static const char *proxy_connection_hdr = "Proxy-Connection: close\r\n";
+static const char *user_agent_key = "User-Agent";
+static const char *host_key = "Host";
+static const char *connection_key = "Connection";
+static const char *proxy_connection_key = "Proxy-Connection";
+
 static const char *eof_hdr = "\r\n";
 
 /* Basic idea for sequential proxy
@@ -22,7 +27,7 @@ static const char *eof_hdr = "\r\n";
 void doit(int fd);
 void clienterror(int fd, char *cause, char *errnum, 
 		 char *shortmsg, char *longmsg);
-void rw_requesthdrs(rio_t *rp, int clientfd, char *host, char *query); 
+void make_http_header(rio_t *rp, char *http_hdr_buf, char *host, char *query); 
 int rw_responsehdrs(rio_t *rp, int clientfd);
 void my_temp_function(int fd);
 /* Function to extract host and query path from request header */
@@ -60,7 +65,7 @@ void doit(int fd)
     rio_t rio_client, rio_server;
     int serverfd, content_len;
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE], 
-         host[MAXLINE], query[MAXLINE], port[MAXLINE];
+         host[MAXLINE], query[MAXLINE], port[MAXLINE], http_header[MAXLINE];
     void *response;
 
     
@@ -82,30 +87,35 @@ void doit(int fd)
         printf("Proxy error: Invalid URL\n");
         return;
     }
-    /* Establish connect with main server */
-    
+
     printf("host: %s\n", host);
     printf("query: %s\n", query);
     printf("port: %s\n", port);
-    printf("Before Open_clientfd\n");
-        
+    
+    /* Read request header from client generate request header to be sent to main server */
+    make_http_header(&rio_client, http_header, host, query);
+    printf("----http header for main server------\n");
+    printf("%s", http_header);
+    printf("-------------------------------------\n");
+    /* Establish connect with main server */    
     serverfd  = Open_clientfd(host, port);
     if (serverfd < 0) {
-        printf("Unable to connect to server: %s\n", host);
+        printf("Unable to connect to server: %s on port %s\n", host, port);
         return;
     }
     Rio_readinitb(&rio_server, serverfd);
-    //printf("After Open_clientfd\n");
+
+    /* Write generated http_request header to main server */
+    Rio_writen(serverfd, http_header, strlen(http_header));
     
-    
+    /* Read respose from server and forward it to client */
     /* Write GET request to tiny server */
     //snprintf(buf, MAXLINE, "GET %s HTTP/1.0\r\n", query);
     
     //printf("buf=%s\n", buf);
     //Rio_writen(serverfd, buf, strlen(buf));
 
-    /* Read request header from client and forward to server */
-    rw_requesthdrs(&rio_client, serverfd);
+    
 
     /* Read respose header from server and forward to client */
     content_len = rw_responsehdrs(&rio_server, fd);
@@ -127,9 +137,9 @@ params: rp = rio_t struct for client request
         serverfd = descriptor for server 
 */
 
-void rw_requesthdrs(rio_t *rp, int serverfd, char *host, char *query) 
+void make_http_header(rio_t *rp, char *http_hdr_buf, char *host, char *query) 
 {
-    char buf[MAXLINE], request_hrd[MAXLINE];
+    char buf[MAXLINE], host_hdr[MAXLINE], other_hdr[MAXLINE], get_hdr[MAXLINE];
 
     /*Rio_readlineb(rp, buf, MAXLINE);
     printf("%s", buf);
@@ -141,6 +151,29 @@ void rw_requesthdrs(rio_t *rp, int serverfd, char *host, char *query)
     }*/
     /* finally send headers terminating string */
     //Rio_writen(serverfd, buf, strlen(buf));
+    while (Rio_readlineb(rp, buf, MAXLINE)>0) {
+        if (!strcasecmp(buf, eof_hdr)) { /* End of header reached */
+            break;
+        }
+        
+        /* If its a host, user_agent, proxy-connection, connection then skip it
+           we will supply our own headers for this fields */
+        if (!strncasecmp(buf, host_key, strlen(host_key)) ||
+            !strncasecmp(buf, user_agent_key, strlen(user_agent_key)) ||
+            !strncasecmp(buf, proxy_connection_key, strlen(proxy_connection_key)) ||
+            !strncasecmp(buf, connection_key, strlen(connection_key))) {
+                continue;
+        }
+        /* If some other headers copy them */
+        strcat(other_hdr, buf);
+    }
+    /* Prepare GET header */
+    sprintf(get_hdr, "GET %s HTTP/1.0\r\n", query);
+    /* Prepare host header */
+    sprintf(host_hdr, "Host: %s\r\n", host);
+    /* Prepare whole http_header */
+    sprintf(http_hdr_buf, "%s%s%s%s%s%s%s",
+    get_hdr, host_hdr, other_hdr, user_agent_hdr, connection_hdr, proxy_connection_hdr, eof_hdr);
 }
 
 /* Function to read respose header from server and forward to client 
