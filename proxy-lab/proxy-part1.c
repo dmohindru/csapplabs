@@ -30,14 +30,12 @@ void clienterror(int fd, char *cause, char *errnum,
 void make_http_header(rio_t *rp, char *http_hdr_buf, char *host, char *query); 
 /* Function to extract host and query path from request header */
 int parse_uri(char *src, char *host, char *query, char *port); 
-void *server_thread(void *vargp);
 int main(int argc, char *argv[])
 {
-    long listenfd, connfd;
+    int listenfd, connfd;
     char hostname[MAXLINE], port[MAXLINE];
     socklen_t clientlen;
     struct sockaddr_storage clientaddr;
-    pthread_t tid;
 
     /* Check command line args */
     if (argc != 2) {
@@ -51,22 +49,10 @@ int main(int argc, char *argv[])
         Getnameinfo((SA *) &clientaddr, clientlen, hostname, MAXLINE, 
                     port, MAXLINE, 0);
         printf("Accepted connection from (%s, %s)\n", hostname, port);
-	    
-        Pthread_create(&tid, NULL, server_thread, (void *)connfd);
-        //doit(connfd);
-        //Close(connfd);
+	    doit(connfd);
+        Close(connfd);                                            //line:netp:tiny:close
     }
     return 0;
-}
-
-void *server_thread(void *vargp)
-{
-    Pthread_detach(Pthread_self());
-    long connfd = (long)vargp;
-    doit(connfd);
-    Close(connfd);
-    Pthread_cancel(Pthread_self());
-    return NULL;
 }
 
 void doit(int fd)
