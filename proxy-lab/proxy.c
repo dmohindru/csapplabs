@@ -24,6 +24,32 @@ static const char *eof_hdr = "\r\n";
 5. Receive data from server
 6. Forward data to client/brower connected
 */
+
+/* Implementation ideas for caching web proxy
+1. Each web object need to have a name which can be
+   picked up from a query send by client.
+2. There can a large buffer of MAX_CACHE_SIZE which would hold
+   web cached objects.
+3. There can be linked list of meta information about web objects.
+   Following information would be required.
+   3.1 Web object name (path or query)
+   3.2 Offset within main cache buffer
+   3.3 Size of web object in bytes
+   3.4 Number of times object accessed (for LRU policy)
+   3.5 Semaphore mutex
+4. Whenever a web object is requested a check is made from 
+   metadata linked list. If that object is present in cache.
+   If its present read its content from cache and send it to
+   client. If not request a web object from server, send it to
+   client and store it in cache buffer.
+5. Eviction policy: Whenver a cached web object is accessed its
+   read count should be incremented. So when cache is full and 
+   eviction policy kicks in. It would check web object with least
+   read count evicit it from cache and store new object in its place.
+6. Each web object can be protected with a samaphore mutex for 
+   thread-safe access.
+
+*/
 void doit(int fd);
 void clienterror(int fd, char *cause, char *errnum, 
 		 char *shortmsg, char *longmsg);
