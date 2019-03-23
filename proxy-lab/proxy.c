@@ -151,6 +151,7 @@ void doit(int fd)
     printf("%s", http_header);
     printf("-------------------------------------\n");
     /* Establish connect with main server */
+    if (wobjp = is_web_obj_present(query))
 
     serverfd  = Open_clientfd(host, port);
     if (serverfd < 0) {
