@@ -5,6 +5,17 @@
 #define MAX_CACHE_SIZE 1049000
 #define MAX_OBJECT_SIZE 102400
 
+/* Web object structure */
+typedef struct {
+    char *name;     /* Name of web object name (query path) */
+    void *data_buf; /* Pointer to data buffer of web object */
+    int size;       /* Size of data buffer */
+    int rcount;     /* Num of times object accessed (for evicition policy) */
+    sem_t mutex;    /* Mutex to protect shared acess to web object */
+    webobj_t *next; /* Pointer to next object in list */  
+
+} webobj_t;
+
 /* You won't lose style points for including this long line in your code */
 static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n";
 static const char *connection_hdr = "Connection: close\r\n";
@@ -15,6 +26,9 @@ static const char *connection_key = "Connection";
 static const char *proxy_connection_key = "Proxy-Connection";
 
 static const char *eof_hdr = "\r\n";
+
+static webobj_t *head = NULL;  /* Head of webobj_t linked list */
+static int cache_buf_size = 0; /* To monitor size of cache buffer size */
 
 /* Basic idea for sequential proxy
 1. Parse GET request
@@ -57,6 +71,11 @@ void make_http_header(rio_t *rp, char *http_hdr_buf, char *host, char *query);
 /* Function to extract host and query path from request header */
 int parse_uri(char *src, char *host, char *query, char *port); 
 void *server_thread(void *vargp);
+/* Helper function for web object management */
+void add_web_obj(char *name, void *data_buf); /* Add web object to list */
+void remove_web_obj(webobj_t *wobj); /* Removes web object from list */
+webobj_t *is_web_obj_present(webobj_t *wobj); /* Is web object present in list */
+
 int main(int argc, char *argv[])
 {
     long listenfd, connfd;
@@ -101,6 +120,8 @@ void doit(int fd)
     int serverfd;
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE], 
          host[MAXLINE], query[MAXLINE], port[MAXLINE], http_header[MAXLINE];
+    
+    webobj_t *wobjp;
 
     Rio_readinitb(&rio_client, fd);
     /* Read GET command from client */
@@ -129,7 +150,8 @@ void doit(int fd)
     printf("----http header for main server------\n");
     printf("%s", http_header);
     printf("-------------------------------------\n");
-    /* Establish connect with main server */    
+    /* Establish connect with main server */
+
     serverfd  = Open_clientfd(host, port);
     if (serverfd < 0) {
         printf("Unable to connect to server: %s on port %s\n", host, port);
