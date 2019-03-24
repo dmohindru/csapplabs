@@ -12,7 +12,7 @@ typedef struct {
     int size;       /* Size of data buffer */
     int rcount;     /* Num of times object accessed (for evicition policy) */
     sem_t mutex;    /* Mutex to protect shared acess to web object */
-    webobj_t *next; /* Pointer to next object in list */  
+    void *next; /* Pointer to next object in list */  
 
 } webobj_t;
 
@@ -72,9 +72,10 @@ void make_http_header(rio_t *rp, char *http_hdr_buf, char *host, char *query);
 int parse_uri(char *src, char *host, char *query, char *port); 
 void *server_thread(void *vargp);
 /* Helper function for web object management */
-void add_web_obj(char *name, void *data_buf); /* Add web object to list */
+void add_web_obj(char *name, char *data_buf); /* Add web object to list */
 void remove_web_obj(webobj_t *wobj); /* Removes web object from list */
-webobj_t *is_web_obj_present(webobj_t *wobj); /* Is web object present in list */
+webobj_t *is_web_obj_present(char *wobj); /* Is web object present in list */
+void display_web_obj(); /* Function to display cached web object used for debug process */
 
 int main(int argc, char *argv[])
 {
@@ -117,9 +118,10 @@ void *server_thread(void *vargp)
 void doit(int fd)
 {
     rio_t rio_client, rio_server;
-    int serverfd;
+    int serverfd, wobj_size;
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE], 
-         host[MAXLINE], query[MAXLINE], port[MAXLINE], http_header[MAXLINE];
+         host[MAXLINE], query[MAXLINE], port[MAXLINE], http_header[MAXLINE],
+         cache_buf[MAX_OBJECT_SIZE];
     
     webobj_t *wobjp;
 
@@ -150,9 +152,17 @@ void doit(int fd)
     printf("----http header for main server------\n");
     printf("%s", http_header);
     printf("-------------------------------------\n");
-    /* Establish connect with main server */
-    if (wobjp = is_web_obj_present(query))
+    
+    /* Display web object for debug process */
+    display_web_obj();
 
+    /* Check for web object if present */
+    if ((wobjp = is_web_obj_present(query)) != NULL) {
+        printf("Servering request from cache\n");
+        Rio_writen(fd, wobjp->data_buf, wobjp->size);
+        return;
+    }
+    /* Establish connect with main server */
     serverfd  = Open_clientfd(host, port);
     if (serverfd < 0) {
         printf("Unable to connect to server: %s on port %s\n", host, port);
@@ -164,10 +174,20 @@ void doit(int fd)
     Rio_writen(serverfd, http_header, strlen(http_header));
 
     size_t n;
+    wobj_size = 0;
     while((n=Rio_readlineb(&rio_server,buf,MAXLINE))!=0)
     {
-        printf("proxy received %zd bytes,then send\n",n);
+        //printf("proxy received %zd bytes,then send\n",n);
         Rio_writen(fd,buf,n);
+        wobj_size += n;
+        if (wobj_size < MAX_OBJECT_SIZE)
+            strcat(cache_buf, buf);
+    }
+    
+    if (wobj_size < MAX_OBJECT_SIZE) {
+
+        add_web_obj(query, cache_buf);
+        cache_buf_size += wobj_size;
     }
     Close(serverfd);
 }
@@ -266,4 +286,75 @@ void clienterror(int fd, char *cause, char *errnum,
     sprintf(buf, "Content-length: %d\r\n\r\n", (int)strlen(body));
     Rio_writen(fd, buf, strlen(buf));
     Rio_writen(fd, body, strlen(body));
+}
+
+/* Add web object to list */
+void add_web_obj(char *name, char *data_buf)
+{
+    /* Create webobj_t on heap memory */
+    int data_len = strlen(data_buf);
+    webobj_t *rover = head;
+    webobj_t *wobjp = (webobj_t *)Malloc(sizeof(webobj_t));
+    /* Allocate space for name and data_buf for a web object */
+    wobjp->name = (char *)Malloc(strlen(name));
+    wobjp->data_buf = (char *)Malloc(data_len);
+    /* Copy data to allocated buffers */
+    strcpy(wobjp->name, name);
+    strcpy(wobjp->data_buf, data_buf);
+    
+    /*Set the size of data_buf */
+    wobjp->size = data_len;
+
+    /* Set initial read count for LRU policy */
+    wobjp->rcount = 1;
+
+    /* Set nex pointer to NULL */
+    wobjp->next = NULL;
+
+    /* Initalize mutex */
+    Sem_init(&wobjp->mutex, 0, 1);
+
+    /* Add web object to end of list */
+    if (rover == NULL) { /* Its a first element in list */
+        head = wobjp;
+        return;
+    }
+    printf("add_web_obj: start of while loop\n");
+    while (rover->next != NULL) {
+        rover = rover->next;
+    }
+    printf("add_web_obj: end of while loop\n");
+    rover->next = wobjp; 
+}
+
+/* Is web object present in list */
+webobj_t *is_web_obj_present(char *name) 
+{
+    webobj_t *rover = head;
+    
+    /* Iterate over whole list */
+    while (rover) {
+        if (!strcasecmp(name, rover->name))
+            return rover;
+        rover = rover->next;
+    }
+
+    /* Not present any matching web object */
+    return NULL;
+}
+
+/* Display list of all cached web objects for debug purpose */
+void display_web_obj()
+{
+    webobj_t *rover = head;
+    printf("----List of cached web objects----\n");
+    while (rover) {
+        printf("+++++++\n");
+        printf("Name: %s\n", rover->name);
+        printf("Size: %d\n", rover->size);
+        printf("+++++++\n");
+        rover = rover->next;
+    }
+    printf("Total size of cache: %d\n", cache_buf_size);
+    printf("--------------\n");
 }
