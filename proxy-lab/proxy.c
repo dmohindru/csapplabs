@@ -7,12 +7,13 @@
 
 /* Web object structure */
 typedef struct {
-    char *name;     /* Name of web object name (query path) */
-    void *data_buf; /* Pointer to data buffer of web object */
-    int size;       /* Size of data buffer */
-    int rcount;     /* Num of times object accessed (for evicition policy) */
-    sem_t mutex;    /* Mutex to protect shared acess to web object */
-    void *next; /* Pointer to next object in list */  
+    char *name;         /* Name of web object name (query path) */
+    void *data_buf;     /* Pointer to data buffer of web object */
+    int size;           /* Size of data buffer */
+    int rcount;         /* Num of times object accessed (for evicition policy) */
+    sem_t mutex;        /* Mutex to protect shared acess to web object */
+    sem_t num_reader;   /* Number of active readers */
+    void *next;         /* Pointer to next object in list */  
 
 } webobj_t;
 
@@ -73,9 +74,12 @@ int parse_uri(char *src, char *host, char *query, char *port);
 void *server_thread(void *vargp);
 /* Helper function for web object management */
 void add_web_obj(char *name, char *data_buf); /* Add web object to list */
-void remove_web_obj(webobj_t *wobj); /* Removes web object from list */
+void evicit_web_obj(); /* Remove a web object from list */
 webobj_t *is_web_obj_present(char *wobj); /* Is web object present in list */
 void display_web_obj(); /* Function to display cached web object used for debug process */
+void increment_read_count(webobj_t *wobjp); /* Increment read count */
+void increment_reader_count(webobj_t *wobjp); /* Increment readers count */
+void decrement_reader_count(webobj_t *wobjp); /* Decrement readers count */
 
 int main(int argc, char *argv[])
 {
@@ -159,7 +163,10 @@ void doit(int fd)
     /* Check for web object if present */
     if ((wobjp = is_web_obj_present(query)) != NULL) {
         printf("Servering request from cache\n");
+        increment_read_count(wobjp);
+        increment_reader_count(wobjp);
         Rio_writen(fd, wobjp->data_buf, wobjp->size);
+        decrement_reader_count(wobjp);
         return;
     }
     /* Establish connect with main server */
@@ -186,6 +193,8 @@ void doit(int fd)
     
     if (wobj_size < MAX_OBJECT_SIZE) {
 
+        if (cache_buf_size >= MAX_CACHE_SIZE) 
+            evicit_web_obj();
         add_web_obj(query, cache_buf);
         cache_buf_size += wobj_size;
     }
@@ -314,6 +323,9 @@ void add_web_obj(char *name, char *data_buf)
     /* Initalize mutex */
     Sem_init(&wobjp->mutex, 0, 1);
 
+    /* Initalize number of active readers */
+    Sem_init(&wobjp->num_reader, 0, 1);
+
     /* Add web object to end of list */
     if (rover == NULL) { /* Its a first element in list */
         head = wobjp;
@@ -357,4 +369,39 @@ void display_web_obj()
     }
     printf("Total size of cache: %d\n", cache_buf_size);
     printf("--------------\n");
+}
+
+/* Function to increment read count of object */
+void increment_read_count(webobj_t *wobjp)
+{
+    P(&wobjp->mutex);
+    wobjp->rcount++;
+    V(&wobjp->mutex);
+}
+
+/* Function to increment current reader count of web object */
+void increment_reader_count(webobj_t *wobjp)
+{
+    P(&wobjp->num_reader);
+}
+
+/* Function to decrement current reader count of web object */
+void decrement_reader_count(webobj_t *wobjp)
+{
+    V(&wobjp->num_reader);
+}
+
+/* Function to evicit a web object */
+void evicit_web_obj()
+{
+    webobj_t *victim, *rover;
+    /* Set rover and vicitim to head of list */
+    victim = rover = head;
+    int mincount;
+
+    while (rover) {
+        rover->rcount;
+
+    }
+
 }
