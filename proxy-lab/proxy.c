@@ -391,17 +391,22 @@ void decrement_reader_count(webobj_t *wobjp)
     V(&wobjp->num_reader);
 }
 
-/* Function to evicit a web object */
+/* Function to evicit a web object
+TODO: Implement this function and probably reader/writer problem
+ */
+
 void evicit_web_obj()
 {
-    webobj_t *victim, *rover;
+    /*webobj_t *victim, *rover; */
     /* Set rover and vicitim to head of list */
-    victim = rover = head;
-    int mincount;
+    /*victim = rover = head;
+    int mincount, premincount;
 
     while (rover) {
-        rover->rcount;
+        mincount = rover->rcount;
 
-    }
+        rover = rover->next;
+
+    }*/
 
 }
